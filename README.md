@@ -7,7 +7,7 @@ To build do
 To setup do
 	source setup.sh
 
-## Example 1
+*Example 1
 	
 	Usage:
 	python example1.py N eff deff bkg dbkg L
