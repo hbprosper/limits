@@ -10,18 +10,21 @@ To setup do
 ### Example 1
 	
 Usage:
->	python example1.py N eff deff bkg dbkg L
->
->     N     observed count
->     eff   signal efficiency estimate
->     deff  uncertainty in signal efficiency estimate
->     bkg   background estimate
->     dbkg  uncertainty in background estimate
->     L     integrated luminosity
+'''
+python example1.py N eff deff bkg dbkg L
 
+     N     observed count
+     eff   signal efficiency estimate
+     deff  uncertainty in signal efficiency estimate
+     bkg   background estimate
+     dbkg  uncertainty in background estimate
+     L     integrated luminosity
+'''
 To test do
->   cd example
->   python example1.py 1 1 0 0 0 1
+'''
+   cd example
+   python example1.py 1 1 0 0 0 1
+'''
   
 Output:
 >
