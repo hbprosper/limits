@@ -6,10 +6,11 @@ To build do
   
 To setup do
 	source setup.sh
-  
-Example
-    Usage:
-       python example1.py N eff deff bkg dbkg L
+
+## Example 1
+	
+	Usage:
+	python example1.py N eff deff bkg dbkg L
 
        N     observed count
        eff   signal efficiency estimate
@@ -31,6 +32,3 @@ Output:
 		
 	=> limit:    3.9 fb (90%CL)	time =   0.046s
   
-
-  
-
