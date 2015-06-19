@@ -3,7 +3,7 @@
 # File:        blimit.py
 #
 #              Example usage:
-#                 ./blimit.py input-file
+#                 ./blimit.py input-file luminosity[=100/fb] CL[=0.90]
 #
 # Created:     17-Jun-2015 HBP Les Houches
 #-----------------------------------------------------------------
@@ -15,15 +15,28 @@ from ROOT import gSystem, TFile, TStopwatch, kFALSE, kTRUE, vector
 #-----------------------------------------------------------------
 USAGE = '''
 Usage:
-    blimits.py input-file luminosity
+    blimits.py input-file luminosity[=100/fb] CL[=0.90]
 
     input-file format:
+    
     count1  count2 ....
-                          repeated
     eff1    eff2 ...
     bkg1    bkg2...
-    
+
+    Each column represents a bin, while each pair of lines of
+    efficiencies and backgrounds contains random samplings of
+    the predicted signal efficiencies and backgrounds. This
+    technique provides a simple, scalable, yet completely
+    general, way to represent systematic uncertainty in predictions,
+    without imposing assumptions about the manner in which the
+    predictions are correlated across signals, backgrounds, and
+    bins.
+     
     expected count (per bin) = xsec * eff * L + bkg
+
+    Limits are set on the parameter "xsec". Note, however, that
+    by setting L=1, and interpeting "eff" as the signal count,
+    "xsec" can be interpreted as the signal strength "mu".
 '''
 CL = 0.90    # "confidence level"
 #-----------------------------------------------------------------
@@ -41,6 +54,11 @@ def main():
     else:
         luminosity = atof(argv[1])
 
+    if len(argv) < 3:
+        CL = 0.90
+    else:
+        CL = atof(argv[2])
+        
     # get data
     records = map(split, filter(lambda x: not (x[0] == '#' or x[0] == ''),
                                 map(strip, open(filename).readlines())))
@@ -96,7 +114,7 @@ def main():
     sigmamin = 0.0
     ii = int((sigest + 10 * sigerr)/10)
     sigmamax = (ii+1)*10
-    print "=> in cross section range: [%6.1f, %6.1f]fb\n" % \
+    print "=> cross section range: [%6.1f, %6.1f]fb\n" % \
       (sigmamin, sigmamax)
 
     # --------------------------------------
@@ -108,15 +126,8 @@ def main():
     bayes = Bayes(model, count, sigmamin, sigmamax, CL)
     swatch.Start()    
     limitbayes = bayes.quantile()
-    print "=> Bayes limit:               %6.1ffb\t%8.3fs" % \
-      (limitbayes, swatch.RealTime())
-
-    # set up standalone CLsA limit calculator
-    CLSA  = CLsA(model, count, sigmamin, sigmamax, CL)
-    swatch.Start()
-    limitCLsA = CLSA.limit()
-    print "=> CLs(A) limit:              %6.1ffb\t%8.3fs" % \
-      (limitCLsA, swatch.RealTime())  
+    print "=> limit: %6.1f fb (%2.0f%sCL)\ttime =%8.3fs" % \
+      (limitbayes, 100*CL, '%', swatch.RealTime())
 #----------------------------------------------------------------------
 try:
     argv = sys.argv[1:]
