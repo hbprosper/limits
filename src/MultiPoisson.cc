@@ -6,6 +6,8 @@
 //--------------------------------------------------------------
 #include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <cmath>
 #include "TMath.h"
 #include "MultiPoisson.h"
@@ -27,6 +29,104 @@ MultiPoisson::MultiPoisson()
     _profile(false)
 {}
 
+
+MultiPoisson::MultiPoisson(string filename, double L)
+  : PDFunction(),
+    _N(vector<double>()),
+    _Ngen(vector<double>()),
+    _L(vector<double>()),
+    _eff(vector<vector<double> >()),
+    _bkg(vector<vector<double> >()),
+    _meanefl(vector<double>()),
+    _meanbkg(vector<double>()),    
+    _random(TRandom3()),
+    _nbins(0),
+    _index(-1),
+    _profile(false) 
+{
+  // open input text file with format
+  // bin1   bin2   ... [L]
+  // count1 count2 ...  x
+  // eff1   eff2   ...  L2
+  // bkg1   bkg2   ...  x
+  
+  ifstream inp(filename);
+  if ( ! inp.good() )
+    {
+      cout << "** MultiPoisson - unable to open file " << filename << endl;
+      exit(0);
+    }
+  
+  // read lines
+  vector<string> records;
+  string line;
+  while(getline(inp, line))
+    {
+      if (line.substr(0,1) == "#") continue;
+      records.push_back(line);
+    }
+
+  // get header and count number of columns
+  vector<string> header;
+  stringstream hin(records[0]);
+  while (hin >> line)
+    {
+      header.push_back(line);
+      //cout << line << endl;
+    }
+  
+  // if last field is the luminosity, then the number
+  // of bins is one less than the number of fields.
+  bool hasLumi =
+    (header.back().substr(0,1) == "l") ||
+    (header.back().substr(0,1) == "L");
+  _nbins = static_cast<int>(header.size());
+  if ( hasLumi ) _nbins--;
+  //cout << "number of bins = " << _nbins << endl;
+
+  // get counts (record 1)
+  vector<double> eff;
+  vector<double> bkg;
+  stringstream din(records[1]);
+  double x;
+  for(int i=0; i < _nbins; i++)
+    {
+      din >> x;
+      _N.push_back(x);
+      _meanefl.push_back(0);
+      _meanbkg.push_back(0);
+      eff.push_back(0);
+      bkg.push_back(0);
+      //cout << "count[" << i << "] = " << x << endl;
+    }
+  
+  // loop over sample
+  int sampleSize = (records.size()-2)/2;
+  for(int c=0; c < sampleSize; c++)
+    {
+      int offset = 2*c + 1;
+      //cout << "\t\t ---------- " << c + 1 << endl;
+      // get efficiencies
+      stringstream ein(records[offset+1]);
+      for(int i=0; i < _nbins; i++)
+	{
+	  ein >> eff[i];
+	  //cout << "eff[" << i << "] = " << eff[i] << endl;
+	}
+      if ( hasLumi ) ein >> L;
+     
+      // get backgrounds
+      stringstream bin(records[offset+2]);
+      for(int i=0; i < _nbins; i++)
+	{
+	  bin >> bkg[i];
+	  //cout << "bkg[" << i << "] = " << bkg[i] << endl;
+	}
+      add(eff, bkg, L);
+    }
+  computeMeans();
+}
+
 MultiPoisson::MultiPoisson(vector<double>& N)
   : PDFunction(),
     _N(N),
@@ -45,11 +145,11 @@ MultiPoisson::MultiPoisson(vector<double>& N)
 MultiPoisson::~MultiPoisson() 
 {}
 
-void MultiPoisson::add(double L, vector<double>& eff, vector<double>& bkg)
+ void MultiPoisson::add(vector<double>& eff, vector<double>& bkg, double L)
 {
-  _L.push_back(L);
   _eff.push_back(eff);
   _bkg.push_back(bkg);
+  _L.push_back(L);
 }
 
 void MultiPoisson::update(int ii, vector<double>& eff)
@@ -61,18 +161,18 @@ void MultiPoisson::update(int ii, vector<double>& eff)
 
 void MultiPoisson::computeMeans()
 {
-  int N = _L.size();
+  int M = _L.size();
   for(int ibin=0; ibin < _nbins; ++ibin)
     {
       _meanefl[ibin] = 0.0;
       _meanbkg[ibin] = 0.0;
-      for(int ii=0; ii < N; ++ii)
+      for(int ii=0; ii < M; ++ii)
 	{
 	  _meanefl[ibin] += _eff[ii][ibin]*_L[ii];
 	  _meanbkg[ibin] += _bkg[ii][ibin];
 	}
-      _meanefl[ibin] /= N;
-      _meanbkg[ibin] /= N;
+      _meanefl[ibin] /= M;
+      _meanbkg[ibin] /= M;
     }  
 }
 
@@ -160,7 +260,7 @@ MultiPoisson::operator() (std::vector<double>& N, double sigma)
 	  double p = 1.0;
 	  for(int ibin=0; ibin < _nbins; ++ibin)
 	    {
-	      double mean = _eff[icon][ibin]*_L[icon]*sigma + _bkg[icon][ibin];
+	      double mean=_eff[icon][ibin]*_L[icon]*sigma + _bkg[icon][ibin];
 	      p *= TMath::Poisson(N[ibin], mean);
 	    }
 	  likelihood += p;

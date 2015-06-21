@@ -12,6 +12,7 @@
 //                      model (not yet implemented!).
 //--------------------------------------------------------------
 #include <vector>
+#include <algorithm>
 #include "TRandom3.h"
 #include "PDFunction.h"
 
@@ -22,7 +23,13 @@ class MultiPoisson : public PDFunction
  public:
   ///
   MultiPoisson();
-     
+
+  /** Constructor:  
+      @param filename - name of text file containing counts, etc.
+  */
+  MultiPoisson(std::string filename, double L=1);
+ 
+  
   /** Constructor:  
       @param N - observed counts
   */
@@ -58,10 +65,10 @@ class MultiPoisson : public PDFunction
    */
   void profile(bool yes=true) {_profile=yes;}
 
-  void add(double L, 
-	   std::vector<double>& eff,
-	   std::vector<double>& bkg);
-
+  void add(std::vector<double>& eff,
+	   std::vector<double>& bkg,
+	   double L=1);
+  
   void update(int ii, std::vector<double>& eff);
   void computeMeans();
   void set(int ii);
@@ -70,6 +77,18 @@ class MultiPoisson : public PDFunction
 
   std::vector<double> get(int ii);
 
+  ///
+  std::vector<double> counts() { return _N; }
+
+  /// Average efficiency X luminosity.
+  std::vector<double> eluminosity() { return _meanefl; }
+
+  /// Average background.
+  std::vector<double> background() { return _meanbkg; }
+
+  /// Sample size.
+  int size() { return _L.size(); }
+  
  private:
     std::vector<double> _N;
     std::vector<double> _Ngen;

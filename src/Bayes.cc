@@ -53,7 +53,7 @@ Bayes::Bayes(PDFunction& model,
     _prior(prior_),
     _normalize(true),
     _interp(0),
-    _nsteps(200),
+    _nsteps(400),
     _x(vector<double>()),
     _y(vector<double>())
 {
@@ -124,7 +124,7 @@ Bayes::normalize()
   if ( _interp == 0)
     _interp = new ROOT::Math::Interpolator(_x.size(),
 					   ROOT::Math::
-					   Interpolation::kCSPLINE);
+					   Interpolation::kLINEAR);
   _interp->SetData(_x, _y);
 
   return _normalization;
