@@ -15,7 +15,7 @@ from ROOT import gSystem, TFile, TStopwatch, kFALSE, kTRUE, vector
 #-----------------------------------------------------------------
 USAGE = '''
 Usage:
-    blimits.py input-file luminosity[=100/fb] CL[=0.90]
+    blimits.py input-file luminosity[=1/fb] CL[=0.90]
 
     input-file format:
     bin1    bin2   ...
@@ -46,6 +46,8 @@ Usage:
     Limits are set on the parameter "xsec". Note, however, that
     by setting L=1, and interpeting "eff" as the signal count,
     "xsec" can be interpreted as the signal strength "mu".
+
+    blimits.py input-file luminosity[=1/fb] CL[=0.90]
 '''
 CL = 0.90    # "confidence level"
 #-----------------------------------------------------------------
@@ -54,12 +56,12 @@ def main():
     # load limit codes
     # --------------------------------------
     gSystem.Load('liblimits')
-    from ROOT import MultiPoisson, Bayes
+    from ROOT import MultiPoisson, Bayes, Wald
 
     argv = sys.argv[1:]
     filename = argv[0]
     if len(argv) < 2:
-        luminosity = 100.0 # /fb
+        luminosity = 1.0 # /fb
     else:
         luminosity = atof(argv[1])
 
@@ -73,9 +75,11 @@ def main():
     # --------------------------------------
     swatch = TStopwatch()
     swatch.Start()
-    print "creating model"        
+    print 
+    print "create model"        
     model = MultiPoisson(filename, luminosity)
-    print "\ttime =%8.3fs" % swatch.RealTime()            
+    print "\ttime =%8.3fs" % swatch.RealTime()
+    print           
     data     = model.counts()
     sigmamin =  0.0
     sigmamax = 20.0
@@ -84,11 +88,22 @@ def main():
     # compute limits
     # --------------------------------------
     swatch.Start()
-    print "computing limit"        
+    print "computing Bayesian limit"        
     bayes = Bayes(model, data, sigmamin, sigmamax, CL)
     limit = bayes.quantile()
-    print "=> limit: %6.1f fb (%2.0f%sCL)\n\ttime =%8.3fs" % \
+    print "=> limit: %6.1f fb (%2.0f%sCL)\n   time:  %8.3fs" % \
       (limit, 100*CL, '%', swatch.RealTime())
+    print
+
+    swatch.Start()
+    print "computing Wald limit (based on an asymptotically valid formula)"
+    print '(see "Asymptotic formulae for likelihood-based tests of new physics"'
+    print 'G. Cowan, K. Cranmer, E. Gross, and O. Vitells, arXiv:1007.1727v3)\n'
+        
+    wald = Wald(model, data, sigmamin, sigmamax, CL)
+    limit = wald.quantile()
+    print "=> limit: %6.1f fb (%2.0f%sCL)\n   time:  %8.3fs" % \
+      (limit, 100*CL, '%', swatch.RealTime())      
 #----------------------------------------------------------------------
 try:
     argv = sys.argv[1:]

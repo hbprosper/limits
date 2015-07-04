@@ -165,7 +165,10 @@ Bayes::quantile(double p)
   ROOT::Math::RootFinder rootfinder;
   
   rootfinder.SetFunction(fn, _poimin, _poimax);
-  int status = rootfinder.Solve();
+  int maxIter   = 10000;
+  double absTol = 1e-8;
+  double relTol = 1e-8;
+  int status = rootfinder.Solve(maxIter, absTol, relTol);
   if ( status != 1 )
     {
       cout << "*** Bayes *** RootFinder failed to find quantile"

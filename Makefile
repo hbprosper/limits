@@ -14,10 +14,11 @@ libdir	:= lib
 
 # get lists of sources
 
-SRCS	:=  	$(srcdir)/CLsA.cc \
+SRCS	:=  	$(srcdir)/Wald.cc \
 		$(srcdir)/Bayes.cc \
 		$(srcdir)/PDFunction.cc \
 		$(srcdir)/MultiPoisson.cc \
+		$(srcdir)/MultiPoissonGamma.cc \
 		$(srcdir)/mnormal.cc
 
 CINTSRCS:= $(wildcard $(srcdir)/*_dict.cc)

@@ -4,13 +4,13 @@ import os, sys
 from string import atof
 from random import gammavariate
 from math import *
-from ROOT import gSystem
+from ROOT import gSystem, TFile, TStopwatch, kFALSE, kTRUE, vector
 #-----------------------------------------------------------------------------
 def computeGammaConstants(c, ec):
     # protect against negative counts
     # and zero uncertainty            
-    if c  <= 0: c  = 1.e-6
-    if ec <= 0: ec = 1.e-7
+    if c  <= 0: c  = 1.e-3
+    if ec <= 0: ec = 1.e-4
     k = c / ec
     k *= k
     gamma = (k+2 + sqrt((k+2)**2 - 4))/2
@@ -61,19 +61,44 @@ def createBlimitInputs(N, eff, deff, bkg, dbkg):
 #-----------------------------------------------------------------------------
 def main():
     CL = 0.90
-    
+    # --------------------------------------
+    # load limit codes
+    # --------------------------------------
+    gSystem.Load('liblimits')
+    from ROOT import MultiPoisson, Bayes
+         
+    # --------------------------------------        
     # get results
-    N, eff, deff, bkg, dbkg, L = map(atof, sys.argv[1:])
+    # --------------------------------------            
+    N, eff, deff, bkg, dbkg, luminosity = map(atof, sys.argv[1:])
     print "N   = %5.0f" % N
     print "eff = %10.4f, %-10.4f" % (eff, deff)
     print "bkg = %10.4f, %-10.4f" % (bkg, dbkg)
+    print
     
+    print "create inputs.dat"
     createBlimitInputs(N, eff, deff, bkg, dbkg)
     
-    # compute limit
-    cmd = 'blimit.py inputs.dat %10.1f %4.2f' % (L, CL)
-    print cmd
-    os.system(cmd)
+    # --------------------------------------        
+    # create model
+    # --------------------------------------
+    print "create model"        
+    model = MultiPoisson("inputs.dat", luminosity)
+    data  = model.counts()
+    sigmamin =  0.0
+    sigmamax = 20.0
+
+    # --------------------------------------
+    # compute limits
+    # --------------------------------------
+    swatch = TStopwatch()
+    swatch.Start()
+    
+    print "compute limit"        
+    bayes = Bayes(model, data, sigmamin, sigmamax, CL)
+    limit = bayes.quantile()
+    print "=> limit: %6.1f fb (%2.0f%sCL)\n   time:  %8.3fs" % \
+      (limit, 100*CL, '%', swatch.RealTime())
 #-----------------------------------------------------------------------------
 try:
     argv = sys.argv[1:]
