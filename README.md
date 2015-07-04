@@ -8,7 +8,6 @@ To setup do
 	source setup.sh
 
 ### Example 1
-	
 Usage:
 ```
 python example1.py N eff deff bkg dbkg L
@@ -28,14 +27,17 @@ To test do
   
 Output:
 ```
-	blimit.py inputs.dat        1.0 0.90
-	number of bins 1
-	counts
-		0		1
-	=> cross section range: [   0.0,   20.0]fb
-	=> limit:    3.9 fb (90%CL)	time =   0.046s
-	```
+	N     =     1
+	eff   =     1.0000, 0.0000 
+	bkg =     0.0000, 0.0000
 
+	create inputs.dat
+ 	create model
+	compute limit
+	=> limit:    3.9 fb (90%CL)
+	      time:     0.059s
+		  ```
+		  
 ### Details
 
 Given observed counts, signal efficiencies, and backgrounds, specified
@@ -46,6 +48,7 @@ Usage:
 ```
     blimits.py input-file luminosity[=100/fb] CL[=0.90]
 	```
+	
 The format of the input-file is:
 	```
 	bin1    bin2   ... 
