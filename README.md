@@ -27,19 +27,18 @@ To test do
   
 Output:
 ```
-	N     =     1
-	eff   =     1.0000, 0.0000 
-	bkg =     0.0000, 0.0000
+   N     =     1
+   eff   =     1.0000, 0.0000 
+   bkg   =     0.0000, 0.0000
 
-	create inputs.dat
- 	create model
-	compute limit
-	=> limit:    3.9 fb (90%CL)
-	      time:     0.059s
-		  ```
-		  
+   create inputs.dat
+   create model
+   compute limit
+   => limit:    3.9 fb (90%CL)
+      time:     0.059s
+   ```
+
 ### Details
-
 Given observed counts, signal efficiencies, and backgrounds, specified
 in the file inputs.dat, blimit.py  computes Bayesian upper limits on
 the signal cross section.
@@ -47,10 +46,10 @@ the signal cross section.
 Usage:
 ```
     blimits.py input-file luminosity[=100/fb] CL[=0.90]
-	```
+```
 	
 The format of the input-file is:
-	```
+```
 	bin1    bin2   ... 
     count1  count2 ...
     eff1    eff2   ...
@@ -80,4 +79,4 @@ The format of the input-file is:
     Limits are set on the parameter "xsec". Note, however, that
     by setting L=1, and interpeting "eff" as the signal count,
     "xsec" can be interpreted as the signal strength "mu".
-	```
+```
