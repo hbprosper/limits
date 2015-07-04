@@ -45,7 +45,7 @@ the signal cross section.
 
 Usage:
 ```
-    blimits.py input-file luminosity[=100/fb] CL[=0.90]
+    blimits.py input-file luminosity[=1/fb] CL[=0.90]
 ```
 	
 The format of the input-file is:
