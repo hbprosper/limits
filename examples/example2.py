@@ -6,16 +6,35 @@ from random import gammavariate
 from math import *
 from ROOT import gSystem, TFile, TStopwatch, kFALSE, kTRUE, vector
 #-----------------------------------------------------------------------------
-def computeGammaConstants(c, ec):
-    # protect against negative counts
-    # and zero uncertainty            
-    if c  <= 0: c  = 1.e-3
-    if ec <= 0: ec = 1.e-4
-    k = c / ec
-    k *= k
-    gamma = (k+2 + sqrt((k+2)**2 - 4))/2
-    beta  = (sqrt(c*c + 4*ec*ec) - c)/2
-    return (gamma, beta)
+def createInputs(filename, N, efl, defl, bkg, dbkg):
+    out = open(filename, 'w')
+    out.write('#----------------------------------------------------------\n')
+    out.write('# Format:\n')
+    out.write('#  bin1    bin2   ...\n')
+    out.write('#  count1  count2 ...\n')
+    out.write('#  efl1    efl2   ...\n')
+    out.write('#  defl1   defl2  ...\n')
+    out.write('#  bkg1    bkg2   ...\n')
+    out.write('#  dbkg1   dbkg2  ...\n')
+    out.write('#    :      :\n')
+    out.write('# The first line is a header, which is followed by\n')
+    out.write('# the counts, then the effective luminosities & unc., then\n')
+    out.write('# the backgrounds and uncertainties.\n')
+    out.write('#\n')
+    out.write('# In order to account for systematic uncertainty\n')
+    out.write('# repeat the quadruplet of effective luminosities and\n')
+    out.write('# background lines with different random samplings.\n')
+    out.write('#----------------------------------------------------------\n')
+    out.write('%10s\n' % 'bin1')
+    out.write('#counts\n')
+    out.write('%10d\n' % int(N))
+    out.write('#effective luminosities (efficiency x luminosity)\n')
+    out.write('%10.4f\n' % efl)
+    out.write('%10.4f\n' % defl)
+    out.write('#backgrounds\n')
+    out.write('%10.4f\n' % bkg)
+    out.write('%10.4f\n' % dbkg)
+    out.close()
 #-----------------------------------------------------------------------------
 def main():
     CL = 0.90
@@ -28,26 +47,20 @@ def main():
     # --------------------------------------        
     # get results
     # --------------------------------------            
-    N, eff, deff, bkg, dbkg = map(atof, sys.argv[1:])[:5]
+    N, efl, defl, bkg, dbkg = map(atof, sys.argv[1:])
     print "N   = %5.0f" % N
-    print "eff = %10.4f, %-10.4f" % (eff, deff)
+    print "eff = %10.4f, %-10.4f" % (efl, defl)
     print "bkg = %10.4f, %-10.4f" % (bkg, dbkg)
-    print
+
+    print "create inputs2.dat"
+    createInputs("inputs2.dat", N, efl, defl, bkg, dbkg)
     
     # --------------------------------------        
     # create model
     # --------------------------------------
-    print "create model"
-    gamma_bkg, beta_bkg = computeGammaConstants(bkg, dbkg)    
-    yy = vector('double')(1); yy[0] = gamma_bkg - 0.5
-    b  = 1.0/beta_bkg
-    
-    gamma_eff, beta_eff = computeGammaConstants(eff, deff)
-    xx = vector('double')(1); xx[0] = gamma_eff - 0.5
-    a  = 1.0/beta_eff
-    
-    model = MultiPoissonGamma(yy, xx, b, a)
-    data  = vector('double')(1, N)
+    print "create model"        
+    model = MultiPoissonGamma("inputs2.dat")    
+    data  = model.counts()
     sigmamin =  0.0
     sigmamax = 20.0
 
@@ -68,11 +81,11 @@ try:
     if len(argv) < 5:
         exit('''
     Usage:
-       python example2.py N eff deff bkg dbkg
-
+       python example2.py N efl defl bkg dbkg
+       
        N     observed count
-       eff   signal efficiency estimate
-       deff  uncertainty in signal efficiency estimate
+       efl   effective signal luminosity (signal efficiency X luminosity)
+       defl  uncertainty in effective signal luminosity
        bkg   background estimate
        dbkg  uncertainty in background estimate
         ''')

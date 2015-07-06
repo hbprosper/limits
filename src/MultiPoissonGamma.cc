@@ -1,161 +1,239 @@
 //--------------------------------------------------------------
-//
-// Author: Harrison B. Prosper (harry@hep.fsu.edu)
-//         Luc Demortier       (luc@fnal.gov)
-//         Supriya Jain        (sjain@fnal.gov)
-// 
-// 
 // File: MultiPoissonGamma.cc
-// Description: Implements the Poisson-Gamma model 
-//              that is marginalized over the nuisance parameters.
+// Description: Implement the multi-Poisson-Gamma model
+//              averaged over an evidence-based prior.
 // 
-// Created: 11-Jun-2010
-// Updated: 04-Jul-2015 HBP Renamed MultiPoissonGamma.cc 
-//
+// Created: June 11, 2014
 //--------------------------------------------------------------
+#include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <cmath>
-#include "TError.h"
+#include "TMath.h"
 #include "MultiPoissonGamma.h"
 
 using namespace std;
-//--------------------------------------------------------------
+
 MultiPoissonGamma::MultiPoissonGamma()
   : PDFunction(),
-    _yy(vector<double>()),
-    _xx(vector<double>()),
+    _N(vector<double>()),
+    _Ngen(vector<double>()),
+    _model(vector<MultiPoissonGammaModel>()),
+    _random(TRandom3()),
     _nbins(0),
-    _b(vector<double>()),
-    _a(vector<double>()),
-    _maxcount(100000),
-    _xdata(vector<double>()),
-    _gslRan(ROOT::Math::Random<ROOT::Math::GSLRngMT>())
+    _index(-1),
+    _profile(false)
 {}
 
-MultiPoissonGamma::MultiPoissonGamma(vector<double>& yy, 
-				     vector<double>& xx,
-				     double b, 
-				     double a,
-				     int maxcount)
+
+MultiPoissonGamma::MultiPoissonGamma(string filename)
   : PDFunction(),
-    _yy(yy),
-    _xx(xx),
-    _nbins((int)yy.size()),
-    _b(vector<double>(_nbins, b)),
-    _a(vector<double>(_nbins, a)),
-    _maxcount(maxcount),
-    _xdata(vector<double>(_nbins, 0)),
-    _gslRan(ROOT::Math::Random<ROOT::Math::GSLRngMT>())
+    _N(vector<double>()),
+    _Ngen(vector<double>()),
+    _model(vector<MultiPoissonGammaModel>()),
+    _random(TRandom3()),
+    _nbins(0),
+    _index(-1),
+    _profile(false) 
 {
-  if((int)_xx.size() != _nbins)
+  // open input text file with format
+  // bin1   bin2   ...
+  // count1 count2 ...
+  // efl1   efl2   ...
+  // defl1  defl2   ...
+  // bkg1   bkg2   ...
+  // dbkg1  dbkg2   ...
+  
+  ifstream inp(filename);
+  if ( ! inp.good() )
     {
-      Error("MultiPoissonGamma",
-	    "input vectors have different sizes.");
+      cout << "** MultiPoissonGamma - unable to open file " << filename << endl;
       exit(0);
+    }
+  
+  // read lines
+  vector<string> records;
+  string line;
+  while(getline(inp, line))
+    {
+      if (line.substr(0,1) == "#") continue;
+      records.push_back(line);
+    }
+
+  // get header and count number of columns
+  vector<string> header;
+  stringstream hin(records[0]);
+  while (hin >> line) header.push_back(line);
+  int nbins = (int)header.size();
+  
+  // get counts (record 1)
+  vector<double> efl;
+  vector<double> defl;
+  vector<double> bkg;
+  vector<double> dbkg;
+  stringstream din(records[1]);
+  double x;
+  for(int i=0; i < nbins; i++)
+    {
+      din >> x;
+      _N.push_back(x);
+      efl.push_back(0);
+      bkg.push_back(0);
+      defl.push_back(0);
+      dbkg.push_back(0);
+    }
+  
+  // loop over sample
+  int sampleSize = (records.size()-2)/4;
+  
+  for(int c=0; c < sampleSize; c++)
+    {
+      int offset = 1 + 4*c;
+      // get effective luminosities
+      stringstream ein(records[offset+1]);
+      for(int i=0; i < nbins; i++) ein >> efl[i];
+
+      // get effective luminosity uncertainties
+      stringstream dein(records[offset+2]);
+      for(int i=0; i < nbins; i++) dein >> defl[i];
+ 
+      // get backgrounds
+      stringstream bin(records[offset+3]);
+      for(int i=0; i < nbins; i++) bin >> bkg[i];
+      
+      // get background uncertainties
+      stringstream dbin(records[offset+4]);
+      for(int i=0; i < nbins; i++) dbin >> dbkg[i];
+ 
+      add(efl, defl, bkg, dbkg);
     }
 }
 
-MultiPoissonGamma::MultiPoissonGamma(vector<double>& yy, 
-				     vector<double>& xx,
-				     vector<double>& b, 
-				     vector<double>& a,
-				     int maxcount)
+MultiPoissonGamma::MultiPoissonGamma(vector<double>& N)
   : PDFunction(),
-    _yy(yy),
-    _xx(xx),
-    _nbins((int)yy.size()),
-    _b(b),
-    _a(a),
-    _maxcount(maxcount),
-    _xdata(vector<double>(_nbins, 0)),
-    _gslRan(ROOT::Math::Random<ROOT::Math::GSLRngMT>())
-{
-  if((int)_xx.size() != _nbins ||
-     (int)_b.size()  != _nbins ||
-     (int)_a.size()  != _nbins)
-    {
-      Error("MultiPoissonGamma",
-	    "input vectors have different sizes.");
-      exit(0);
-    }
-}
+    _N(N),
+    _Ngen(N),
+    _random(TRandom3()),
+    _nbins((int)N.size()),
+    _index(-1),
+    _profile(false)
+{}
 
 MultiPoissonGamma::~MultiPoissonGamma() 
 {}
+
+void MultiPoissonGamma::add(vector<double>& efl, vector<double>& defl,
+			    vector<double>& bkg, vector<double>& dbkg)
+			    
+			    
+{
+  vector<double> x;
+  vector<double> a;
+  _convert(efl, defl, x, a);
+  
+  vector<double> y;
+  vector<double> b;
+  _convert(bkg, dbkg, y, b);
+
+  _model.push_back( MultiPoissonGammaModel(_N, x, a, y, b) );
+}
+
+void MultiPoissonGamma::update(int ii,
+			       vector<double>& efl,
+			       vector<double>& defl)
+{
+  if ( ii < 0 ) return;
+  if ( ii > (int)(_model.size()-1) ) return;
+
+  vector<double> x;
+  vector<double> a;
+  _convert(efl, defl, x, a);
+  _model[ii].setX(x, a);
+}
+
+void MultiPoissonGamma::set(int ii)
+{
+  if ( ii < 0 ) return;
+  if ( ii > (int)(_model.size()-1) ) return;
+  _index = ii;
+}
+
+void MultiPoissonGamma::reset()
+{
+  _index = -1;
+}
 
 vector<double>&  
 MultiPoissonGamma::generate(double sigma)
 {
   if(_nbins == 0)
     {
-      Error("MultiPoissonGamma",
-	    "required input vectors not supplied by user.");
+      cout << "MultiPoissonGamma::generate: nbins = 0" << endl;
       exit(0);
     }
-      
-  for(int ibin=0; ibin < _nbins; ++ibin)
-    {
-      double epsilon = _gslRan.Gamma(_xx[ibin]+0.5, 1.0/_a[ibin]);
-      double b       = _gslRan.Gamma(_yy[ibin]+0.5, 1.0/_b[ibin]);
-      double mean    = epsilon * sigma + b;
-      _xdata[ibin]   = _gslRan.Poisson(mean);
-    }
-  return _xdata;
+
+  int ii = _random.Integer(_model.size()-1);
+  _Ngen  = _model[ii].generate(sigma);
+  return _Ngen;
 }
+
 
 double 
-MultiPoissonGamma::operator() (std::vector<double>& xdata, double sigma)
+MultiPoissonGamma::operator() (std::vector<double>& N, double sigma)
 {
-  if((int)xdata.size() != _nbins)
+  int first = 0;
+  int last  = _model.size()-1;
+  if ( _index >= 0 )
     {
-      Error("MultiPoissonGamma",
-	    "input vector size != %d bins", _nbins);
-      exit(0);
+      first = _index;
+      last  = _index;
     }
-  
-  long double C1[_maxcount+1];
-  long double C2[_maxcount+1];
-    
-  // loop over bins
-  long double prob = 1.0;    
-  for(int ibin=0; ibin < _nbins; ++ibin)
-    {
-      double nn = xdata[ibin];    // observed count	  
-      if ( nn > _maxcount )
-	{
-          Error("MultiPoissonGamma",
-                "bin %d has a count: %10.3e that is greater than maxcount: %d.", 
-                ibin, nn, _maxcount);
-          exit(0);
-	}
-      
-      double p1 = sigma / _a[ibin];
-      double p2 = 1.0 / _b[ibin];
-      double A1 = _xx[ibin]-0.5;  // signal count
-      double A2 = _yy[ibin]-0.5;  // background count
+  int nconstants = 1 + last - first;
 
-      // compute coefficients
-      C1[0] = pow(1+p1, -(A1+1));
-      C2[0] = pow(1+p2, -(A2+1));
-      double dk;	  
-      if ( nn > 0 )
+  double likelihood = 0.0;
+  if ( _profile )
+    {
+      // do something!
+    }
+  else
+    {
+      for(int ii=first; ii <= last; ++ii)
 	{
-          for(int ik=1; ik <= (int)nn; ++ik)
-	    {
-              dk = (double)ik;
-              C1[ik] = C1[ik-1]*(p1/(1+p1))*(A1+dk)/dk;
-              C2[ik] = C2[ik-1]*(p2/(1+p2))*(A2+dk)/dk;
-	    }
+	  double p = _model[ii](N, sigma);
+	  likelihood += p;
 	}
-	  
-      // compute p(nn|sigma)
-      long double sum = 0.0;  
-      for (int ik=0; ik <= (int)nn; ++ik)
-	{
-          sum += C1[ik]*C2[(int)nn-ik];
-	}	  
-      prob *= sum; // product of likelihood over bins	  
-    } // loop over bins
-  return (double)prob;
+      likelihood /= nconstants;
+    }
+  return likelihood;
 }
 
+void 
+MultiPoissonGamma::setSeed(int seed) { _random.SetSeed(seed); }
+
+double 
+MultiPoissonGamma::operator() (double sigma)
+{
+  return (*this)(_N, sigma);
+}
+
+void MultiPoissonGamma::_convert(vector<double>& efl, vector<double>& defl,
+				 vector<double>& x, vector<double>& a)
+{
+  x.clear();
+  a.clear();
+  for(size_t i=0; i < efl.size(); i++)
+    {
+      double c  = efl[i];
+      double dc = defl[i];
+      if ( c <= 0 ) c = 1.e-3;
+      if ( dc<= 0 )dc = 1.e-4;
+      double k = c / dc;
+      k *= k;
+      double k2 = k+2;
+      double gamma = (k2 + sqrt(k2*k2 - 4))/2 ;
+      double beta  = (sqrt(c*c + 4*dc*dc) - c)/2;
+      x.push_back(gamma - 1);
+      a.push_back(1.0/beta);
+    }
+}

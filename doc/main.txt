@@ -1,0 +1,24 @@
+/**	\mainpage
+
+	\section	intro	Introduction
+
+<b>limits</b> is a standalone package for computing Bayesian limits
+for multi-Poisson likelihoods. 
+<p>
+https://github.com/hbprosper/limits
+
+	v1_0_0
+	04 July, 2015
+	Harrison B. Prosper
+                <p>
+		Department of Physics, Florida State University
+<p>
+email: harry@hep.fsu.edu, Harrison.Prosper@cern.ch
+*/
+
+
+
+
+
+
+

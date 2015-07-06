@@ -4,7 +4,7 @@
 //
 //              q(poi) = -2*ln L(poi)/L(poi_hat)
 //
-//              and assuming the Wald approximation
+//              and assuming that the Wald approximation
 //
 //              q(poi) = (poi-poi_hat)^2 / var(poi_hat), poi_hat < poi
 //                    or 0 for poi_hat > poi.
@@ -111,18 +111,7 @@ double Wald::operator()(double poi)
   // compute observed value of statistic
   double qobs = 0;
   if ( _poihat <= poi )
-    {
-      // compute d^2nll(poihat)/dpoi^2 = 1/var at best fit value, for which
-      // y'(poihat) = 0.
-      double h  = 1.e-3;
-      double f0 = nll(_poihat);
-      double f1 = nll(_poihat+h);
-      double f2 = nll(_poihat+2*h);
-      // accurate to O(h^2)
-      double invVar = (8*f1 - 7*f0 - f2)/(2*h*h);
-      double q = poi - _poihat;
-      qobs = invVar * q * q;
-    }
+    qobs = 2*(nll(poi) - nll(_poihat));
   if ( qobs != qobs )
     {
       cout << "Wald::operator() - qobs is Nan at poi = " << poi << endl;

@@ -29,7 +29,7 @@ Output:
 ```
    N     =     1
    eff   =     1.0000, 0.0000 
-   bkg   =     0.0000, 0.0000
+   bkg =     0.0000, 0.0000
 
    create inputs.dat
    create model
@@ -39,44 +39,40 @@ Output:
    ```
 
 ### Details
-Given observed counts, signal efficiencies, and backgrounds, specified
-in the file inputs.dat, blimit.py  computes Bayesian upper limits on
-the signal cross section.
+Given observed counts, effective luminosities (efficiency*luminosity),
+and backgrounds, specified in the file inputs.dat, blimit.py  computes
+Bayesian upper limits on the signal cross section (as well a
+frequentist limit based on an asymptotic formula that makes use of the
+Wald approximation (see "Asymptotic formulae for likelihood-based
+tests of new physics", G. Cowan, K. Cranmer, E. Gross, and O. Vitells,
+arXiv:1007.1727v3).
 
 Usage:
 ```
-    blimits.py input-file luminosity[=1/fb] CL[=0.90]
+    blimits.py input-file  CL[=0.90]
 ```
 	
 The format of the input-file is:
 ```
-	bin1    bin2   ... 
+	bin1      bin2     ... 
     count1  count2 ...
-    eff1    eff2   ...
-    bkg1    bkg2   ...
+    efl1       efl2      ...
+    bkg1     bkg2    ...
 
-    The first line is a header in which, optionally, the last column is the
-    luminosity. If the luminosity is given, then a sampled value of
-    the luminosity should be placed at the end of each row
-    of sampled efficiencies. If the luminosity column is present, then
-    the number of bins is presumed to be one fewer than the number of columns.
+    The first line is a header. Commented lines begin with a "#"
     
-    Each column (apart from the luminosity column) represents a bin,
-    while each pair of lines of efficiencies and backgrounds contains
-    random samplings of the predicted signal efficiencies and
-    backgrounds. The ensemble of efficiencies and backgrounds
-    constitute the evidence-based prior with respect to which the
-    likelihood is averaged.
+    Each column corresponds to a bin, while each pair of lines after
+    the counts contains random samplings of the effective luminosities
+	and backgrounds. 
 
     This technique provides a simple, scalable, yet completely
     general, way to represent systematic uncertainty in predictions,
-    without the need for assumptions about the manner in which the
-    predictions are correlated across signals, backgrounds, and
-    bins.
+    without the need to assume how the predictions are correlated
+	across signals, backgrounds, and bins.
      
-    The expected count (per bin) = xsec * eff * L + bkg
+    The expected count (per bin) = sigma * efl + bkg
 
-    Limits are set on the parameter "xsec". Note, however, that
-    by setting L=1, and interpeting "eff" as the signal count,
-    "xsec" can be interpreted as the signal strength "mu".
+    Limits are set on the parameter "sigma". Note, however, that
+    by interpeting "efl" as the signal count, "sigma" can be
+    interpreted as the signal strength "mu".
 ```

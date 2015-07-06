@@ -18,6 +18,7 @@ SRCS	:=  	$(srcdir)/Wald.cc \
 		$(srcdir)/Bayes.cc \
 		$(srcdir)/PDFunction.cc \
 		$(srcdir)/MultiPoisson.cc \
+		$(srcdir)/MultiPoissonGammaModel.cc \
 		$(srcdir)/MultiPoissonGamma.cc \
 		$(srcdir)/mnormal.cc
 

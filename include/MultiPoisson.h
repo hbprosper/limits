@@ -4,19 +4,23 @@
 // File: MultiPoisson.h
 // Description: Implement the multi-Poisson model averaged
 //              with respect to a prior specified as a swarm
-//              of points. Model assumes mean = eff*L + bkg for
-//              each bin.
+//              of points. Model assumes mean = efl * sigma + bkg
+//              for each bin, where efl = eff * luminosity.
 // 
 // Created: 11-Jun-2010 Harrison B. Prosper & Supriya Jain
 // Updated: 11-Aug-2014 HBP - add option to profile multi-Poisson
 //                      model (not yet implemented!).
+//          05-Jul-2015 HBP - assume user supplies the effective
+//                      luminosity efl = eff * L rather than
+//                      eff and L separately. This makes for a
+//                      cleaner implementation.
 //--------------------------------------------------------------
 #include <vector>
 #include <algorithm>
 #include "TRandom3.h"
 #include "PDFunction.h"
 
-/** Implements the multi-Poisson model
+/** Implement the multi-Poisson model averaged over evidence-based prior.
 */
 class MultiPoisson : public PDFunction
 {
@@ -24,13 +28,14 @@ class MultiPoisson : public PDFunction
   ///
   MultiPoisson();
 
-  /** Constructor:  
-      @param filename - name of text file containing counts, etc.
+  /** Default constructor.  
+      @param filename - name of text file containing counts, effective
+      luminosities, and backgrounds.
   */
-  MultiPoisson(std::string filename, double L=1);
+  MultiPoisson(std::string filename);
  
   
-  /** Constructor:  
+  /** Main constructor. 
       @param N - observed counts
   */
   MultiPoisson(std::vector<double>& N);
@@ -40,62 +45,63 @@ class MultiPoisson : public PDFunction
 	     
   /** Generate data for one experiment.
       @param sigma - value of parameter of interest
-      @param useMean - if true, set effective luminosity and background to
-      mean values.
   */
   std::vector<double>& generate(double sigma);
-
-  /** Generate data for one experiment using the mean efficiency and background.
-      @param sigma - value of parameter of interest
-      @param useMean - if true, set effective luminosity and background to
-      mean values.
-  */
-  std::vector<double>& generateUsingMeans(double sigma);
-
   
-  /** Computes PDF.
+  /** Compute likelihood.
       @param N - observed data
       @param sigma - value of parameter of interest 
   */
   double operator() (std::vector<double>& N, double sigma);
 
+  /** Compute likelihood using internally cached data.
+      @param sigma - value of parameter of interest 
+  */
   double operator() (double sigma);
 
-  /** if true, profile rather than average
+  /** If true, profile rather than average.
+      Not yet implemented.
    */
   void profile(bool yes=true) {_profile=yes;}
 
-  void add(std::vector<double>& eff,
-	   std::vector<double>& bkg,
-	   double L=1);
+  /** Add one set of efficiency, background, and luminosity parameters.
+      @param efl - effective luminosity parameters (efl = eff * lumi)
+      @param bkg - background parameters
+   */
+  void add(std::vector<double>& eff, std::vector<double>& bkg);
+
+  /** Update effective luminosities.
+   */
+  void update(int ii, std::vector<double>& efl);
   
-  void update(int ii, std::vector<double>& eff);
+  /** Compute mean effective luminosities and backgrounds.
+   */
   void computeMeans();
+  
   void set(int ii);
   void reset();
   void setSeed(int seed);
 
+  ///
   std::vector<double> get(int ii);
 
   ///
   std::vector<double> counts() { return _N; }
 
-  /// Average efficiency X luminosity.
+  /// Return average effective luminosities (efficiency * luminosity).
   std::vector<double> eluminosity() { return _meanefl; }
 
-  /// Average background.
+  /// Return average backgrounds.
   std::vector<double> background() { return _meanbkg; }
 
-  /// Sample size.
-  int size() { return _L.size(); }
+  /// Return sample size.
+  int size() { return _efl.size(); }
   
  private:
     std::vector<double> _N;
     std::vector<double> _Ngen;
-    std::vector<double> _L;
-    std::vector<std::vector<double> > _eff;
+    std::vector<std::vector<double> > _efl;
     std::vector<std::vector<double> > _bkg;
-
     std::vector<double> _meanefl;
     std::vector<double> _meanbkg;
     
