@@ -1,0 +1,26 @@
+#----------------------------------------------------------
+# Format:
+#  bin1    bin2   ...
+#  count1  count2 ...
+#  efl1    efl2   ...
+#  defl1   defl2  ...
+#  bkg1    bkg2   ...
+#  dbkg1   dbkg2  ...
+#    :      :
+# The first line is a header, which is followed by
+# the counts, then the effective luminosities & unc., then
+# the backgrounds and uncertainties.
+#
+# In order to account for systematic uncertainty
+# repeat the quadruplet of effective luminosities and
+# background lines with different random samplings.
+#----------------------------------------------------------
+      bin1
+#counts
+        25
+#effective luminosities (efficiency x luminosity)
+   17.3000
+    1.3000
+#backgrounds
+    9.4000
+    0.5000
