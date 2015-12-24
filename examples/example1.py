@@ -96,8 +96,7 @@ def main():
     model = MultiPoisson("inputs.dat")
     data  = model.counts()
     sigmamin =  0.0
-    sigmamax = max(data)
-    sigmamax += 5 * sqrt(sigmamax)
+    sigmamax = 10.0
 
     # --------------------------------------
     # compute limits

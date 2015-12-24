@@ -50,26 +50,26 @@ This will run blimit.py (see below) on onebin.dat and threebin.dat.
 Output:
 ```
 	==> create model from onebin.dat <==
-Wald
+Wald		range: [     0.0,     4.0]
 => central interval [ 0.62,  1.22] (68.3%) width =  0.60
 => limit:  1.45 fb (95%CL)
    time:     0.024s
 
-Bayes
-=> central interval [ 0.64,  1.28] (68.3%) width =  0.65
-=> limit:  1.52 fb (95%CL)
-   time:     0.050s
+Bayes		range: [     0.0,     4.0]
+=> central interval [ 0.66,  1.27] (68.3%) width =  0.61
+=> limit:  1.51 fb (95%CL)
+   time:     0.051s
 
 	==> create model from threebin.dat <==
-Wald
+Wald		range: [     0.0,     4.0]
 => central interval [ 0.61,  1.20] (68.3%) width =  0.59
 => limit:  1.43 fb (95%CL)
    time:     0.024s
 
-Bayes
-=> central interval [ 0.65,  1.26] (68.3%) width =  0.61
-=> limit:  1.50 fb (95%CL)
-   time:     0.053s
+Bayes		range: [     0.0,     4.0]
+=> central interval [ 0.65,  1.26] (68.3%) width =  0.60
+=> limit:  1.49 fb (95%CL)
+   time:     0.051s
 ```
 
 ### Details
@@ -84,7 +84,7 @@ arXiv:1007.1727v3).
 
 Usage:
 ```
-    blimit.py input-file  [CL=0.95]
+    blimit.py input-file  [xmin=0] [xmax=4] [CL=0.95]
 ```
 	
 The format of the input-file is:

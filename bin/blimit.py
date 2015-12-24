@@ -3,7 +3,7 @@
 # File:        blimit.py
 #
 #              Example usage:
-#                 blimit.py input-file [CLupp=0.95]
+#                 blimit.py input-file [xmin=0] [xmax=4] [CLupper=0.95]
 #
 # Created:     17-Jun-2015 HBP Les Houches
 #-----------------------------------------------------------------------------
@@ -20,9 +20,19 @@ def main():
         sys.exit("** can't find file %s" % filename)
 
     if len(argv) < 2:
+        sigmamin = 0.0
+    else:
+        sigmamin = atof(argv[1])
+
+    if len(argv) < 3:
+        sigmamax = 4.0
+    else:
+        sigmamax = atof(argv[2])
+                
+    if len(argv) < 4:
         CLupper = 0.95
     else:
-        CLupper = atof(argv[1])
+        CLupper = atof(argv[3])
         
     # --------------------------------------
     # load limit codes
@@ -36,17 +46,15 @@ def main():
     print "\n\t==> create model from %s <==" % filename        
     model = MultiPoissonGamma(filename)    
     data  = model.counts()
-    sigmamin =  0.0
-    sigmamax = max(data)
-    sigmamax += 5 * sqrt(sigmamax)
-
+    
     # --------------------------------------
     # compute Wald limits
     # --------------------------------------
     swatch = TStopwatch()
     swatch.Start()
 
-    print "Wald"
+    print "Wald\t\trange: [%8.1f,%8.1f]" % (sigmamin, sigmamax)
+    
     wald = Wald(model, data, sigmamin, sigmamax)
 
     CL = 0.683
@@ -66,7 +74,7 @@ def main():
     # --------------------------------------
     # compute Bayes limits
     # --------------------------------------
-    print "\nBayes"
+    print "\nBayes\t\trange: [%8.1f,%8.1f]" % (sigmamin, sigmamax)    
     swatch = TStopwatch()
     swatch.Start()
     
