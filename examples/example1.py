@@ -1,5 +1,17 @@
 #!/usr/bin/env python
 #-----------------------------------------------------------------------------
+# example1.py
+#
+# Given
+#      N     observed count
+#      eff   signal efficiency * luminosity
+#      deff  uncertainty
+#      bkg   background estimate
+#      dbkg  uncertainty in background
+#
+# compute a Bayesian upper limit on "cross section"
+# Created June 2015 Les Houches
+#-----------------------------------------------------------------------------
 import os, sys
 from string import atof
 from random import gammavariate

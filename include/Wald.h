@@ -61,6 +61,7 @@ class Wald
   double   _alpha;
   double   _poihat;
   double   _poierr;
+  double   _Z;
 
   double   _f(double poi);
   

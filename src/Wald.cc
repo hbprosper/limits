@@ -110,8 +110,8 @@ double Wald::operator()(double poi)
 {
   // compute observed value of statistic
   double qobs = 0;
-  if ( _poihat <= poi )
-    qobs = 2*(nll(poi) - nll(_poihat));
+  //if ( _poihat <= poi )
+  qobs = 2*(nll(poi) - nll(_poihat));
   if ( qobs != qobs )
     {
       cout << "Wald::operator() - qobs is Nan at poi = " << poi << endl;
@@ -120,7 +120,11 @@ double Wald::operator()(double poi)
      }
 
   // compute p(poi)
-  double Z = sqrt(qobs);
+  double qobsabs = abs(qobs);
+  double sign = 1.0;
+  if ( qobs != 0 ) sign = qobs/qobsabs;
+    
+  double Z = sign*sqrt(abs(qobs));
   return 1 - TMath::Freq(Z);
 }
 
@@ -132,7 +136,19 @@ double Wald::quantile(double CL)
   ROOT::Math::WrappedMemFunction<Wald, double (Wald::*)(double)> 
     fn(*this, &Wald::_f);
   ROOT::Math::RootFinder rootfinder;
-  rootfinder.SetFunction(fn, _poihat, _poimax);
+  double poimin = _poimin;
+  double poimax = _poimax;
+  double alphapoi = (*this)(_poihat);
+  
+  if ( alphapoi > _alpha )
+    poimin = _poihat;
+  else
+    {
+      _alpha = CL;
+      poimax = _poihat;
+    }
+  
+  rootfinder.SetFunction(fn, poimin, poimax);
   int status = rootfinder.Solve();
   if ( status != 1 )
     {

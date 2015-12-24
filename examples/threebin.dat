@@ -8,17 +8,18 @@
 #  dbkg1   dbkg2  ...
 #    :      :
 # The first line is a header, which is followed by
-# the counts, then the effective luminosities & unc., then
-# the backgrounds and uncertainties.
+# the counts, then the effective luminosities & unc. (or
+# predicted signal & unc.), then the backgrounds and
+# uncertainties.
 #
 # In order to account for systematic uncertainty
-# repeat the quadruplet of effective luminosities and
-# background lines with different random samplings.
+# repeat the quadruplet of lines and with different
+# random samplings.
 #----------------------------------------------------------
 	bin1	bin2	bin3
 #counts
 	4	13	8
-#effective luminosities (efficiency x luminosity)
+#predicted signal and uncertainty
 	3.0	7.9	6.4
     	0.4	1.0	0.7
 #backgrounds
