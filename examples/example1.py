@@ -10,7 +10,7 @@
 #      dbkg  uncertainty in background
 #
 # compute a Bayesian upper limit on "cross section"
-# Created June 2015 Les Houches
+# Created June 2015 Les Houches 
 #-----------------------------------------------------------------------------
 import os, sys
 from string import atof
@@ -96,7 +96,8 @@ def main():
     model = MultiPoisson("inputs.dat")
     data  = model.counts()
     sigmamin =  0.0
-    sigmamax = 20.0
+    sigmamax = max(data)
+    sigmamax += 5 * sqrt(sigmamax)
 
     # --------------------------------------
     # compute limits
