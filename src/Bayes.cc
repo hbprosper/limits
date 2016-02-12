@@ -5,6 +5,7 @@
 // Created: 11 Jan 2011 HBP
 // Updated: 13 Mar 2011 HBP - fix normalization of post.
 //          06 Mar 2014 HBP
+//          11 Feb 2016 HBP - rename shadowed varibale "cl"
 //--------------------------------------------------------------
 #include <iostream>
 #include <fstream>
@@ -43,13 +44,13 @@ Bayes::Bayes(PDFunction& model,
 	     std::vector<double>& d,
 	     double poimin,
 	     double poimax,
-	     double cl,
+	     double cl_,
 	     PriorFunction* prior_)
   : _pdf(&model),
     _data(d),
     _poimin(poimin),
     _poimax(poimax),
-    _cl(cl),
+    _cl(cl_),
     _prior(prior_),
     _normalize(true),
     _interp(0),
@@ -179,7 +180,7 @@ Bayes::quantile(double p)
 }
 
 void
-Bayes::MAP(double CL, vector<double>& results)
+Bayes::MAP(double CL_, vector<double>& results)
 {
   if ( _normalize ) normalize();
 
@@ -187,7 +188,7 @@ Bayes::MAP(double CL, vector<double>& results)
   minuit.SetPrintLevel(-1);
   minuit.SetFCN(nlpFunc);
 
-  double chi2 = TMath::NormQuantile((1.0+CL)/2);
+  double chi2 = TMath::NormQuantile((1.0+CL_)/2);
   chi2 = chi2*chi2/2;
   minuit.SetErrorDef(chi2);
 

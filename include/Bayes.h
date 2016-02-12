@@ -7,6 +7,7 @@
 // 
 // Created: 11 Jan 2011 Harrison B. Prosper
 // Updated: 06 Mar 2014 HBP clean up
+//          11 Feb 2016 HBP rename shadowed variable
 //--------------------------------------------------------------
 #include <vector>
 #include <string>
@@ -31,7 +32,7 @@ public:
 	std::vector<double>& data,
 	double poimin,
 	double poimax,
-	double cl=0.95,
+	double cl_=0.95,
 	PriorFunction* prior_=0);
 
   virtual ~Bayes();

@@ -1,3 +1,4 @@
+# ----------------------------------------------------------------------------
 # Build liblimits.so
 # Created 27 Feb 2013 HBP & SS
 #         30 May 2015 HBP - standardize structure (src, lib, include) 
@@ -11,6 +12,9 @@ NAME	:= limits
 incdir	:= include
 srcdir	:= src
 libdir	:= lib
+
+# create lib directory if one does not exist
+$(shell mkdir -p lib)
 
 # get lists of sources
 
@@ -31,7 +35,6 @@ DICTIONARIES	:= $(SRCS:.cc=_dict.cc)
 
 # get list of objects
 OBJECTS		:= $(SRCS:.cc=.o) $(OTHERSRCS:.cc=.o) $(DICTIONARIES:.cc=.o)
-
 #say := $(shell echo "DICTIONARIES:     $(DICTIONARIES)" >& 2)
 #say := $(shell echo "" >& 2)
 #say := $(shell echo "SRCS: $(SRCS)" >& 2)
@@ -40,19 +43,19 @@ OBJECTS		:= $(SRCS:.cc=.o) $(OTHERSRCS:.cc=.o) $(DICTIONARIES:.cc=.o)
 # ----------------------------------------------------------------------------
 ROOTCINT	:= rootcint
 # check for clang++, otherwise use g++
-COMPILER	:= $(shell which clang++ >& $(HOME)/.cxx; tail $(HOME)/.cxx)
-COMPILER	:= $(shell basename "$(COMPILER)")
-ifeq ($(COMPILER),clang++)
+COMPILER	:= $(shell which clang++)
+ifneq ($(COMPILER),)
 CXX		:= clang++
 LD		:= clang++
 else
 CXX		:= g++
 LD		:= g++
 endif
+
 CPPFLAGS	:= -I. -I$(incdir)
 CXXFLAGS	:= -O -Wall -fPIC -g -ansi -Wshadow -Wextra \
 $(shell root-config --cflags)
-LDFLAGS		:= -g 
+LDFLAGS		:= -g
 # ----------------------------------------------------------------------------
 # which operating system?
 OS := $(shell uname -s)
@@ -62,10 +65,10 @@ ifeq ($(OS),Darwin)
 else
 	LDFLAGS	+= -shared
 	LDEXT	:= .so
-endif	
+endif
 LDFLAGS += $(shell root-config --ldflags)
 LIBS 	:= -lMathMore -lMinuit
-LIBS	+= $(shell root-config --libs --nonew)
+LIBS	+= $(shell root-config --libs)
 LIBRARY	:= $(libdir)/lib$(NAME)$(LDEXT)
 # ----------------------------------------------------------------------------
 all: $(LIBRARY)
