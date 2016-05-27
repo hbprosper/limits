@@ -4,12 +4,23 @@
 #
 # Given
 #      N     observed count
-#      eff   signal efficiency * luminosity
-#      deff  uncertainty
-#      bkg   background estimate
-#      dbkg  uncertainty in background
+#      l     effective integrated luminosity
+#            (signal efficiency * acceptance * integrated luminosity)
+#      dl    uncertainty in effective integrated luminosity
+#      b     background estimate
+#      db    uncertainty in background
 #
-# compute a Bayesian upper limit on "cross section"
+# compute a Bayesian upper limit on "cross section".
+#
+# In this example, we assume a multi-Poisson model:
+#
+#     L(D|x, l, b) = prod_i=1^M Poisson(N_i|x * l_i + b_i)
+#
+# which is marginalized over a set of T points {(l_1,..l_M, b_1,..b_M)_i=j^T}.
+#
+# This is more general than example 2, which assumes a particular model for the
+# background prior, namely, a gamma density. 
+#
 # Created June 2015 Les Houches 
 #-----------------------------------------------------------------------------
 import os, sys
@@ -35,17 +46,17 @@ def createInputs(filename, N, efl, defl, bkg, dbkg):
     out.write('#----------------------------------------------------------\n')
     out.write('# Format:\n')
     out.write('#  bin1    bin2   ...\n')
-    out.write('#  count1  count2 ...\n')
-    out.write('#  efl1    efl2   ...\n')
-    out.write('#  bkg1    bkg2   ...\n')
+    out.write('#  N1      N2 ...\n')
+    out.write('#  l1      l2   ...\n')
+    out.write('#  b1      b2   ...\n')
     out.write('#    :      :\n')
     out.write('# The first line is a header, which is followed by\n')
     out.write('# the counts, then the effective luminosities then\n')
     out.write('# the backgrounds\n')
     out.write('#\n')
     out.write('# In order to account for systematic uncertainty\n')
-    out.write('# repeat the pair of effective luminosities and\n')
-    out.write('# background lines with different random samplings.\n')
+    out.write('# repeat the pair of effective luminosities lines and\n')
+    out.write('# pair of background lines with different random samplings.\n')
     out.write('#----------------------------------------------------------\n')
     out.write('%10s\n' % 'bin1')
     out.write('#counts\n')

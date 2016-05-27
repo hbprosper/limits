@@ -73,40 +73,136 @@ Bayes		range: [     0.0,     4.0]
 ```
 
 ### Details
-Given observed counts, effective luminosities (efficiency*luminosity)
+Given observed counts, effective integrated luminosities (acceptable X
+efficiency X integrated luminosity)
 or predicted signal,
-and backgrounds, specified in an file blimit.py  computes
+and backgrounds, specified in an file, blimit.py  computes
 Bayesian upper limits on the signal cross section (as well a
 frequentist limit based on an asymptotic formula that makes use of the
 Wald approximation (see "Asymptotic formulae for likelihood-based
 tests of new physics", G. Cowan, K. Cranmer, E. Gross, and O. Vitells,
 arXiv:1007.1727v3).
 
+#### example1.py
+This example uses the multi-Poisson model and a swarm of points in the
+space of effective integrated luminosities and backgrounds that
+constitute a discrete representation of an evidence-based prior for
+the latter. The multi-Poisson
+likelihood is averaged over this prior. To use this model, you need to
+have a model for how the effective integrated luminosity and
+background estimates are probabilistically related to the
+corresponding effective integrated luminosity and background
+parameters.  Consider, for example, the background with parameter and
+estimate "b" and "B", respectively. A reasonable model
+for the background prior is 
+```
+	p(b | B ) = exp(-qb) (qb)^B / Gamma(B+1) 
+```
+where "q" is a scale factor that connects the background in a bin of a
+ background control region to the corresponding bin in the signal
+ region.  If "q" is not known precisely, it too will be modeled with
+ some prior density.
+
+In order to use example1.py, you would need first to sample from p(b |
+B) for every bin and every background because what goes into the input
+file for the multi-Poisson model are not the estimates "B" themselves, but
+rather their associated parameters "b". If the above model for "b" and
+"l" is adequate, then just use example2.py.
+
+The format of the input-file for the multi-Poisson model is:
+```
+	bin1      bin2     ...
+    count1  count2 ...
+    l1          l2         ...
+    b1         b2        ...
+	
+    The first line is a header. Commented lines begin with a "#".
+    
+    Each column corresponds to a bin, while each pair of lines after
+    the counts contains random samplings of the (expected) effective luminosities
+	(or predicted signals) and (expected) backgrounds. 
+
+    This technique provides a simple, scalable, yet completely
+    general, way to represent systematic uncertainty in predictions,
+    without the need to make assumptions about how the predictions are correlated
+	across signals, backgrounds, and bins.
+     
+     The expected count (per bin) is
+
+	sigma * l + b
+
+	or
+
+	mu * l + b
+
+	Limits are set on the parameter "sigma" or the signal strength
+	"mu". In the latter case, "l" is interpreted as the expected
+	signal rather than the expected integrated luminosity.
+```
+
+
+#### example2.py
+Unlike example1.py, which uses the
+multi-Poisson model and an input file format in which the entries
+after the counts are _parameter_ values, rather than estimates thereof,
+_blimit.py_ uses the _multi-Poisson-gamma_ model, which requires both the
+estimate of the effective integrated luminosities and backgrounds
+together with their associated uncertainties. The idea here is to
+simplify your life a little if the priors for the effective integrated
+luminosities and backgrounds is the one described above (see 
+*example1.py*).
+
+The input file for this example contain, not sampled parameters, but rather 
+estimates of these quantities, along with their uncertainties, while
+statistical dependencies  among
+signals, backgrounds, and bins, is modeled by providing many sets of
+estimates. The marginalization over these sets of estimates, which
+models
+integration of the systematic effects, is
+approximated by Monte Carlo integration - basically, one
+averages over the multi-Poisson-gamma model, while the marginalization
+over over  corresponding parameters is done exactly. 
+
+For example, you may have a histogram for the signal and one for the
+background from which you extract estimates x +/-dx for each bin. These are
+the values needed by _example2.py_. If you have many pairs of signal and
+background histograms, each associated with a different random
+sampling of systematic effects from, for example, the jet energy scale, jet energy
+resolution, parton distribution functions, trigger efficiency, etc.,
+this ensemble of histograms constitute the prior density that models
+the uncertainty due to systematic effects.
+
 Usage:
 ```
     blimit.py input-file  [xmin=0] [xmax=4] [CL=0.95]
 ```
-	
+
+The program uses the multi-Poisson-gamma model
+
 The format of the input-file is:
 ```
-	bin1      bin2     ... 
+	bin1      bin2     ...
     count1  count2 ...
-    efl1       efl2      ...
-    bkg1     bkg2    ...
-
+    l1          l2         ...
+	dl1        dl2       ...
+    b1         b2        ...
+    db1       db2       ...
+	
     The first line is a header. Commented lines begin with a "#"
     
-    Each column corresponds to a bin, while each pair of lines after
+    Each column corresponds to a bin, while each quadruplet of lines after
     the counts contains random samplings of the effective luminosities
-	(or predicted signals) and backgrounds. 
+	(or predicted signals) and associated uncertainties, followed by
+	background estimates and uncertainties. 
 
     This technique provides a simple, scalable, yet completely
     general, way to represent systematic uncertainty in predictions,
     without the need to assume how the predictions are correlated
 	across signals, backgrounds, and bins.
      
-     The expected count (per bin) = sigma * efl + bkg
-	 or mu * signal + bkg
+     The expected count (per bin) = sigma * l + b
+	 or mu * l + b
 
-	Limits are set on the parameter "sigma" or the signal strength "mu".
+	Limits are set on the parameter "sigma" or the signal strength
+	"mu". (See comments in example1.py above.)
 ```
