@@ -48,7 +48,7 @@ MultiPoisson::MultiPoisson(string filename)
   // efl1   efl2   ...
   // bkg1   bkg2   ...
   
-  ifstream inp(filename);
+  ifstream inp(filename.c_str());
   if ( ! inp.good() )
     {
       cout << "** MultiPoisson - unable to open file " << filename << endl;
