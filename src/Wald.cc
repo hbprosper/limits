@@ -120,12 +120,11 @@ double Wald::operator()(double poi)
      }
 
   // compute p(poi)
-  //double qobsabs = abs(qobs);
-  //double sign = 1.0;
-  //if ( qobs != 0 ) sign = qobs/qobsabs;
-  //double Z = sign*sqrt(abs(qobs));
-  //return 1 - TMath::Freq(Z);
-  return qobs;
+  double qobsabs = abs(qobs);
+  double sign = 1.0;
+  if ( qobs != 0 ) sign = qobs/qobsabs;
+  double Z = sign*sqrt(abs(qobs));
+  return 1 - TMath::Freq(Z);
 }
 
 double Wald::quantile(double CL)
