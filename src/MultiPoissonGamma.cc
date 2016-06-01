@@ -48,7 +48,8 @@ MultiPoissonGamma::MultiPoissonGamma(string filename)
   ifstream inp(filename.c_str());
   if ( ! inp.good() )
     {
-      cout << "** MultiPoissonGamma - unable to open file " << filename << endl;
+      cout << "** MultiPoissonGamma - unable to open file "
+	   << filename << endl;
       exit(0);
     }
   

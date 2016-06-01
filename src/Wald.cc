@@ -110,7 +110,6 @@ double Wald::operator()(double poi)
 {
   // compute observed value of statistic
   double qobs = 0;
-  //if ( _poihat <= poi )
   qobs = 2*(nll(poi) - nll(_poihat));
   if ( qobs != qobs )
     {
@@ -118,7 +117,6 @@ double Wald::operator()(double poi)
       cout << "Wald::operator() - setting qobs = 0" << endl;
       qobs = 0.0;
      }
-
   // compute p(poi)
   double qobsabs = abs(qobs);
   double sign = 1.0;
@@ -126,6 +124,31 @@ double Wald::operator()(double poi)
   double Z = sign*sqrt(abs(qobs));
   return 1 - TMath::Freq(Z);
 }
+
+double Wald::zvalue(double poi)
+{
+  // compute observed value of statistic
+  double qobs = 0;
+  qobs = 2*(nll(poi) - nll(_poihat));
+  if ( qobs != qobs )
+    {
+      cout << "Wald::zvalue(poi) - qobs is Nan at poi = " << poi << endl;
+      cout << "Wald::zvalue(poi) - setting qobs = 0" << endl;
+      qobs = 0.0;
+     }
+  if ( qobs > 0 )
+    return sqrt(qobs);
+  else
+    {
+      cout << "Wald::zvalue(poi) - qobs = "
+	   << qobs << " < 0  of "
+	   << poi << endl;
+      cout << "Wald::zvalue(poi) - setting Z = sign*sqrt(abs(qobs))"
+	   << endl;      
+      return -sqrt(abs(qobs));
+    }
+}
+
 
 double Wald::quantile(double CL)
 {

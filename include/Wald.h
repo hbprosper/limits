@@ -39,6 +39,10 @@ class Wald
    */
   double operator()(double poi);
 
+  /** Compute Z-value given parameter of interest.
+   */
+  double zvalue(double poi);
+
   /// Compute quantile.
   double quantile(double CL=-1);
 
