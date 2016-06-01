@@ -45,7 +45,7 @@ MultiPoissonGamma::MultiPoissonGamma(string filename)
   // bkg1   bkg2   ...
   // dbkg1  dbkg2   ...
   
-  ifstream inp(filename);
+  ifstream inp(filename.c_str());
   if ( ! inp.good() )
     {
       cout << "** MultiPoissonGamma - unable to open file " << filename << endl;
