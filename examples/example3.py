@@ -68,10 +68,19 @@ def main():
 
     # compute Z-value = sqrt(t0), where
     #              t0 = -2 ln [L(0)/L(poi_hat)]
+    mu_hat = wald.estimate()
+    dmu    = wald.uncertainty()
+    
     Z = wald.zvalue(0)
     print "=> Z-value:           %8.2f" % Z
-    Z1 = (upperlimit+lowerlimit)/(upperlimit-lowerlimit)
-    print "=> S/dS:              %8.2f" % Z1
+
+    print "=> mu_hat:            %8.2f +/- %-8.2f" % (mu_hat, dmu)
+    
+    relErr = mu_hat/dmu
+    print "=> mu_hat/dmu (1):    %8.2f" % relErr
+    
+    relErr = (upperlimit+lowerlimit)/(upperlimit-lowerlimit)    
+    print "=> mu_hat/dmu (2):    %8.2f" % relErr
 #-----------------------------------------------------------------------------
 try:
     argv = sys.argv[1:]
