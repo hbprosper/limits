@@ -71,7 +71,7 @@ def main():
     Z = wald.zvalue(0)
     print "=> Z-value:           %8.2f" % Z
     Z1 = (upperlimit+lowerlimit)/(upperlimit-lowerlimit)
-    print "=> S/dS:              %8.2f" % 
+    print "=> S/dS:              %8.2f" % Z1
 #-----------------------------------------------------------------------------
 try:
     argv = sys.argv[1:]
