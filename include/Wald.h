@@ -39,10 +39,18 @@ class Wald
    */
   double operator()(double poi);
 
-  /** Compute Z-value given parameter of interest.
+  /** Compute Z-value given parameter of interest using Z = sqrt[-2*ln L(0)/L(poi_hat)].
    */
   double zvalue(double poi);
-
+   /** Return best fit value.
+    * This should be called after the interval calculation.
+   */
+  double estimate();
+  /** Return uncertainty associated with estimate.
+   * This should be called after the interval calculation.
+   */
+  double uncertainty();
+  
   /// Compute quantile.
   double quantile(double CL=-1);
 
