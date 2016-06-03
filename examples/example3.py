@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #-----------------------------------------------------------------------------
-# File:        zvalue.py
+# File:        example3.py
 # Description: Compute 
 #              Example usage:
 #                 zvalue.py input-file [xmin=0] [xmax=4] [CLupper=0.95]
@@ -70,6 +70,8 @@ def main():
     #              t0 = -2 ln [L(0)/L(poi_hat)]
     Z = wald.zvalue(0)
     print "=> Z-value:           %8.2f" % Z
+    Z1 = (upperlimit+lowerlimit)/(upperlimit-lowerlimit)
+    print "=> S/dS:              %8.2f" % 
 #-----------------------------------------------------------------------------
 try:
     argv = sys.argv[1:]
