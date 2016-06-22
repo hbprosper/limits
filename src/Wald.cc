@@ -101,6 +101,16 @@ double Wald::fit(double guess)
   return _poihat;
 }
  
+double Wald::estimate()
+{
+  return _poihat;
+}
+
+double Wald::uncertainty()
+{
+  return _poierr;
+}
+
 double Wald::nll(double poi)
 {
   return -log((*_model)(_data, poi));
