@@ -68,6 +68,9 @@ public:
 
   double CL() { return _cl; }
 
+  /// Compute Bayesian Z=sign(B10)*sqrt(2*|B10|), where B10 is the Bayes factor.
+  double zvalue(double mu=1);
+
 private:
   PDFunction*    _pdf;
   std::vector<double> _data;

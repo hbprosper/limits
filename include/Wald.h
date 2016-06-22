@@ -1,7 +1,7 @@
 #ifndef WALD_H
 #define WALD_H
 // ---------------------------------------------------------------------------
-// File: Wald.cc
+// File: Wald.h
 // Description: compute limits using the statistic
 //
 //              q(poi) = -2*ln L(poi)/L(poi_hat)

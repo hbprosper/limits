@@ -67,10 +67,14 @@ def main():
 
     CL = CLupper
     limit = wald.quantile(CL)
-    print "=> limit: %5.2f fb (%2.0f%sCL)\n   time:  %8.3fs" % \
+    print "=> upper limit: %5.2f (%2.0f%sCL)\t\ttime:  %8.3fs" % \
       (limit, 100*CL, '%', swatch.RealTime())
 
-
+    # compute Z-value = sqrt(t0), where
+    #              t0 = -2 ln [L(0)/L(poi_hat)]
+    Z = wald.zvalue(0)
+    print "=> Z-value:     %5.2f" % Z
+    
     # --------------------------------------
     # compute Bayes limits
     # --------------------------------------
@@ -90,8 +94,13 @@ def main():
 
     CL = CLupper
     limit = bayes.quantile(CL)
-    print "=> limit: %5.2f fb (%2.0f%sCL)\n   time:  %8.3fs" % \
+    print "=> upper limit: %5.2f (%2.0f%sCL)\t\ttime:  %8.3fs" % \
       (limit, 100*CL, '%', swatch.RealTime())
+
+    # compute Z-value, where
+    #              Z = sign(lnB10)*sqrt(2*|lnB10|), B10 = p(s+b)/p(b)
+    Z = bayes.zvalue(1)
+    print "=> Z-value:     %5.2f" % Z
 
 #-----------------------------------------------------------------------------
 try:

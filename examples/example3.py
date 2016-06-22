@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 #-----------------------------------------------------------------------------
-# File:        zvalue.py
+# File:        example3.py
 # Description: Compute 
 #              Example usage:
-#                 zvalue.py input-file [xmin=0] [xmax=4] [CLupper=0.95]
+#                 example3.py input-file [xmin=0] [xmax=4] [CLupper=0.95]
 #
 # Created:     01-Jun-2016 HBP Bari
+#              22-Jun-2016 HBP add ability to read histograms
 #-----------------------------------------------------------------------------
 import os, sys
 from string import atof
@@ -76,7 +77,7 @@ try:
     if len(argv) < 1:
         exit('''
     Usage:
-       zvalue.py filename [xmin=0] [xmax=4] [CL(upper)=0.95]
+       example3.py filename [xmin=0] [xmax=4] [CL(upper)=0.95]
         ''')
     main() 
 except KeyboardInterrupt:

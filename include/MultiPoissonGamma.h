@@ -4,12 +4,13 @@
 // File: MultiPoissonGamma.h
 // Description: Implement the multi-Poisson-gamma model averaged
 //              with respect to a prior specified as a swarm
-//              of points. Model assumes mean = eff*L + bkg for
-//              each bin.
+//              of points. Model assumes mean = mu*s + b for
+//              each bin, where mu is the signal strength.
 // 
 // Created: 11-Jun-2010 Harrison B. Prosper & Supriya Jain
 // Updated: 11-Aug-2014 HBP - add option to profile model
 //                      model (not yet implemented!).
+//          21-Jun-2016 HBP - add histogram reading option
 //--------------------------------------------------------------
 #include <vector>
 #include <algorithm>
@@ -21,16 +22,15 @@
    <p>
    The class computes
    \f{eqnarray*}{
-   p(\sigma | D) & = & \int \textrm{PoissonGamma}(D | \sigma, y, x, b, a) 
-   \, \pi(y, x, b, a) \, dy \, dx \, db \, da, \\
+   p(\mu | D) & = & \int \textrm{PoissonGamma}(D | \mu, x, y, a, b) 
+   \, \pi(x, y, a, b) \, dx \, dy \, da \, db, \\
    & \approx & \frac{1}{K}
-   \sum_{i=1}^K \textrm{PoissonGamma}(D | \sigma, y_i, x_i, b_i, a_i), 
+   \sum_{i=1}^K \textrm{PoissonGamma}(D | \mu, x_i, y_i, a_i, b_i), 
    \f}
-   where \f$\pi(y, x, b, a)\f$ is an evidenced-based prior specified
-   as a swarm of \f$K\f$ sampled points \f$\{(y_i, x_i, b_i, a_i)\}\f$. The
-   parameters \f$y\f$ and \f$x\f$ are backgrounds and effective luminosities
-   (signal efficiency times acceptance times luminosities), respectively,
-   with associated scale factors  \f$b\f$, and \f$a\f$. 
+   where \f$\pi(x, y, a, b)\f$ is an evidenced-based prior specified
+   as a swarm of \f$K\f$ sampled points \f$\{(x_i, y_i, a_i, b_i)\}\f$. The
+   parameters \f$x\f$ and \f$y\f$ are the signals and backgrounds, respectively,
+   with associated scale factors  \f$a\f$, and \f$b\f$. 
 */
 class MultiPoissonGamma : public PDFunction
 {
@@ -38,54 +38,54 @@ class MultiPoissonGamma : public PDFunction
   ///
   MultiPoissonGamma();
 
-  /** Default constructor. 
-      @param filename - name of text file containing counts, etc.
+  /** 
+      @param filename - name of text file containing counts, or histogram names.
   */
   MultiPoissonGamma(std::string filename);
   
-  /** Main constructor.  
-      @param N - observed counts
+  /** 
+      @Param N - observed counts
   */
   MultiPoissonGamma(std::vector<double>& N);
- 
+  
   ///
   ~MultiPoissonGamma();
 	     
   /** Generate data for one experiment.
-      @param sigma - value of parameter of interest
+      @param mu - signal strength (parameter of interest)
   */
-  std::vector<double>& generate(double sigma);
+  std::vector<double>& generate(double mu);
   
   /** Compute likelihood.
       @param N - observed data
-      @param sigma - value of parameter of interest 
+      @param mu - signal strength (parameter of interest)
   */
-  double operator() (std::vector<double>& N, double sigma);
+  double operator() (std::vector<double>& N, double mu);
 
   /** Compute likelihood using internally cached data.
-      @param sigma - value of parameter of interest 
+      @param mu - signal strength (parameter of interest) 
   */
-  double operator() (double sigma);
+  double operator() (double mu);
 
   /** If true, profile rather than average.
       Not yet implemented.
    */
   void profile(bool yes=true) {_profile=yes;}
 
-  /** Add one set of backgrounds and effective luminosities.
+  /** Add one set of signals and backgrounds and associated uncertainties.
+      @param sig  - signals
+      @param dsig - signal uncertainties
       @param bkg  - backgrounds
       @param dbkg - background uncertainties
-      @param efl  - effective luminosities
-      @param defl - effective luminosity uncertainties
 
      <p>
      This class uses MultiPoissonGammaModel, which requires
-     counts \f$y\f$ and \f$x\f$ and their associated
-      scale factors \f$b\f$ and \f$a\f$, respectively, that define
-      the gamma priors for the backgrounds and effective luminosities.
+     counts \f$x\f$ and \f$y\f$ and their associated
+      scale factors \f$a\f$ and \f$b\f$, respectively, that define
+      the gamma priors for the backgrounds and signals.
       However, often the evidence-based prior is specified as
-      estimates in the form \f$c \pm \delta c\f$ for the effective
-      luminosities and backgrounds. The add method converts these 
+      estimates in the form \f$c \pm \delta c\f$ for the background
+      and signals. The add method converts these 
       estimates into effective counts and scale factors and then
       instantiates a MultiPoissonGammaModel.
       <p>
@@ -113,16 +113,18 @@ class MultiPoissonGamma : public PDFunction
       \beta  & = & [\sqrt{c^2 + 4 \, \delta c^2} - c] / 2, 
       \f}
       where \f$k = (c / \delta c)^2\f$. An analogous consideration
-      applies to the effective luminosities.
+      applies to the signals.
    */
-  void add(std::vector<double>& bkg, std::vector<double>& dbkg,
-	   std::vector<double>& efl, std::vector<double>& defl);
+  void add(std::vector<double>& sig, std::vector<double>& dsig,
+	   std::vector<double>& bkg, std::vector<double>& dbkg);
 	   
   ///
-  void update(int ii, std::vector<double>& eff, std::vector<double>& deff);
+  void update(int ii, std::vector<double>& sig, std::vector<double>& dsig);
 
   ///
   void set(int ii);
+
+  ///
   void reset();
 
   ///
@@ -140,12 +142,16 @@ class MultiPoissonGamma : public PDFunction
     std::vector<MultiPoissonGammaModel> _model;
     
     TRandom3 _random;
-    int _nbins;
-    int _index;
+    int  _nbins;
+    int  _index;
     bool _profile;
 
-    void _convert(std::vector<double>& efl, std::vector<double>& defl,
-		  std::vector<double>& x,   std::vector<double>& a);    
+    void _convert(std::vector<double>& sig, std::vector<double>& dsig,
+		  std::vector<double>& x,   std::vector<double>& a);
+    void _readTextFile(std::vector<std::string>& records);
+    void _readRootFile(std::vector<std::string>& records);
+    void _getcounts(std::string rfilename, std::string histname,
+		    std::vector<double>& c, std::vector<double>& dc);    
 };
 
 #endif

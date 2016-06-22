@@ -221,6 +221,15 @@ Bayes::MAP(double CL_, vector<double>& results)
   return;
 }
 
+
+double 
+Bayes::zvalue(double poi)
+{
+  double lnB10 = log(likelihood(poi)/likelihood(0));
+  double abslnB10 = abs(lnB10);
+  return lnB10 * sqrt(2*abslnB10) / abslnB10;
+}
+
 double 
 Bayes::_likeprior(double poi)
 {
