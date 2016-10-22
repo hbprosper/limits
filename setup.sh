@@ -1,2 +1,6 @@
-export PATH=`pwd`/bin:$PATH
-export LD_LIBRARY_PATH=`pwd`/lib:`pwd`/src:$LD_LIBRARY_PATH
+LIMITS_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PATH=$LIMITS_PATH/bin:$PATH
+export LD_LIBRARY_PATH=$LIMITS_PATH/lib:$LIMITS_PATH/src:$LD_LIBRARY_PATH
+echo "LIMITS_PATH=$LIMITS_PATH"
+
+
