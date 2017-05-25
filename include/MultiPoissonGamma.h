@@ -11,6 +11,7 @@
 // Updated: 11-Aug-2014 HBP - add option to profile model
 //                      model (not yet implemented!).
 //          21-Jun-2016 HBP - add histogram reading option
+//          25-May-2017 HBP - use S and B instead of efl and bkg!
 //--------------------------------------------------------------
 #include <vector>
 #include <algorithm>
@@ -49,7 +50,7 @@ class MultiPoissonGamma : public PDFunction
   MultiPoissonGamma(std::vector<double>& N);
   
   ///
-  ~MultiPoissonGamma();
+  virtual ~MultiPoissonGamma();
 	     
   /** Generate data for one experiment.
       @param mu - signal strength (parameter of interest)

@@ -2,25 +2,25 @@
 # Use the multi-Poisson-gamma model (unlike example1.py,
 # which uses a multi-Poission model)
 # Format:
-#  bin1    bin2   ...
+#  number of bins
 #  N1      N2     ...
-#  l1      l2     ...
-#  dl1     dl2    ...
+#  number of samples
+#  s1      s2     ...
+#  ds1     ds2    ...
 #  b1      b2     ...
 #  db1     db2    ...
 #    :      :
-# The first line is a header, which is followed by
-# the counts, then the effective luminosities & uncertainty.
-# (or predicted signal & unc.), then the backgrounds and
-# uncertainties.
-#
 # In order to account for systematic uncertainty
 # repeat the quadruplet of lines with different
-# random samplings.
+# random samplings of the signal and background
 #----------------------------------------------------------
-      bin1
-#counts
+# number of bins
+	1
+# observed counts
         25
+
+# number of samples
+  	 1
 #predicted signal and uncertainty
    17.3000
     1.3000

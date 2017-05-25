@@ -1,2 +1,6 @@
-setenv PATH ${PWD}/bin:${PATH}
-setenv LD_LIBRARY_PATH ${PWD}/lib:${PWD}/src:${LD_LIBRARY_PATH}
+# need a robust way to find location of this file
+setenv LIMITS_PATH $PWD
+setenv PATH ${LIMITS_PATH}/bin:${PATH}
+setenv LD_LIBRARY_PATH ${LIMITS_PATH}/lib:${LIMITS_PATH}/src:${LD_LIBRARY_PATH}
+echo $LIMITS_PATH
+

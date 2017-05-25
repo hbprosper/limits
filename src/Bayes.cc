@@ -5,7 +5,7 @@
 // Created: 11 Jan 2011 HBP
 // Updated: 13 Mar 2011 HBP - fix normalization of post.
 //          06 Mar 2014 HBP
-//          11 Feb 2016 HBP - rename shadowed varibale "cl"
+//          30 May 2015 HBP - implement direct RooFit interface.
 //--------------------------------------------------------------
 #include <iostream>
 #include <fstream>
@@ -44,26 +44,63 @@ Bayes::Bayes(PDFunction& model,
 	     std::vector<double>& d,
 	     double poimin,
 	     double poimax,
-	     double cl_,
+	     double cl,
 	     PriorFunction* prior_)
   : _pdf(&model),
     _data(d),
     _poimin(poimin),
     _poimax(poimax),
-    _cl(cl_),
+    _cl(cl),
     _prior(prior_),
+#ifdef __WITH_ROOFIT__
+    _rfprior(0),
+    _rfpoi(0),
+#endif
     _normalize(true),
     _interp(0),
-    _nsteps(400),
+    _nsteps(200),
     _x(vector<double>()),
     _y(vector<double>())
 {
   OBJ = this;
 }
 
+#ifdef __WITH_ROOFIT__
+Bayes::Bayes(RooAbsPdf& pdf, RooArgSet& obs, RooRealVar& poi,
+	     double cl,
+	     RooAbsPdf* prior_)
+  : _pdf(new PDFWrapper(pdf, obs, poi)),
+    _data(vector<double>(obs.getSize())),
+    _poimin(poi.getMin()),
+    _poimax(poi.getMax()),
+    _cl(cl),
+    _prior(0),
+    _rfprior(prior_),
+    _rfpoi(&poi),
+    _normalize(true),
+    _interp(0),
+    _nsteps(200),
+    _x(vector<double>()),
+    _y(vector<double>())    
+{
+  OBJ = this;
+  RooArgList list(obs);
+  for(size_t c=0; c < _data.size(); c++)
+    {
+      RooAbsArg* arg = list.at(c);
+      _data[c] = (dynamic_cast<RooRealVar*>(arg))->getVal();
+    }
+}
+#endif
+
 
 Bayes::~Bayes() 
 {
+  // if _rfpoi is non-zero, this means we are using the RooFit
+  // interface
+  #ifdef __WITH_ROOFIT__
+  if (_rfpoi) delete _pdf;
+  #endif
   if (_interp) delete _interp;
 }
 
@@ -74,6 +111,13 @@ Bayes::prior(double poi)
     {
       return (*_prior)(poi);
     }
+#ifdef __WITH_ROOFIT__
+  else if (_rfprior)
+    {
+      _rfpoi->setVal(poi);
+      return _rfprior->getVal();
+    }
+#endif
   return 1;
 }
 
@@ -125,7 +169,7 @@ Bayes::normalize()
   if ( _interp == 0)
     _interp = new ROOT::Math::Interpolator(_x.size(),
 					   ROOT::Math::
-					   Interpolation::kLINEAR);
+					   Interpolation::kCSPLINE);
   _interp->SetData(_x, _y);
 
   return _normalization;
@@ -166,10 +210,7 @@ Bayes::quantile(double p)
   ROOT::Math::RootFinder rootfinder;
   
   rootfinder.SetFunction(fn, _poimin, _poimax);
-  int maxIter   = 10000;
-  double absTol = 1e-8;
-  double relTol = 1e-8;
-  int status = rootfinder.Solve(maxIter, absTol, relTol);
+  int status = rootfinder.Solve();
   if ( status != 1 )
     {
       cout << "*** Bayes *** RootFinder failed to find quantile"
@@ -180,7 +221,7 @@ Bayes::quantile(double p)
 }
 
 void
-Bayes::MAP(double CL_, vector<double>& results)
+Bayes::MAP(double CL, vector<double>& results)
 {
   if ( _normalize ) normalize();
 
@@ -188,7 +229,7 @@ Bayes::MAP(double CL_, vector<double>& results)
   minuit.SetPrintLevel(-1);
   minuit.SetFCN(nlpFunc);
 
-  double chi2 = TMath::NormQuantile((1.0+CL_)/2);
+  double chi2 = TMath::NormQuantile((1.0+CL)/2);
   chi2 = chi2*chi2/2;
   minuit.SetErrorDef(chi2);
 
@@ -221,7 +262,6 @@ Bayes::MAP(double CL_, vector<double>& results)
   return;
 }
 
-
 double 
 Bayes::zvalue(double poi)
 {
@@ -229,6 +269,7 @@ Bayes::zvalue(double poi)
   double abslnB10 = abs(lnB10);
   return lnB10 * sqrt(2*abslnB10) / abslnB10;
 }
+
 
 double 
 Bayes::_likeprior(double poi)
@@ -250,6 +291,6 @@ Bayes::_q(double poi)
   else if ( poi > _poimax )
     return 1;
   else
-    return _interp->Eval(poi) - _cl;
+     return _interp->Eval(poi) - _cl;
 }
 

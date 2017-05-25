@@ -7,21 +7,32 @@
 // 
 // Created: 11 Jan 2011 Harrison B. Prosper
 // Updated: 06 Mar 2014 HBP clean up
-//          11 Feb 2016 HBP rename shadowed variable
+//          30 May 2015 HBP add a constructor to take RooFit
+//                      models directly rather than through
+//                      PDFWrapper
+//
 //--------------------------------------------------------------
 #include <vector>
 #include <string>
 #include "PDFunction.h"
 #include "PriorFunction.h"
 #include "Math/Interpolator.h"
+#ifdef __WITH_ROOFIT__
+#include "PDFWrapper.h"
+#include "RooAbsPdf.h"
+#include "RooArgSet.h"
+#include "RooRealVar.h"
+#endif
 //--------------------------------------------------------------
+/** Compute Bayesian limits.
+ */
 class Bayes
 {
 public:
   Bayes () {}
 
-  /** 
-      @param model  - pdf
+  /** Compute Bayesian limits.
+      @param model  - probability density function (pdf)
       @param data   - observed data
       @param poimin - minimum of parameter of interest
       @param poimax - maximum of parameter of interest
@@ -32,9 +43,22 @@ public:
 	std::vector<double>& data,
 	double poimin,
 	double poimax,
-	double cl_=0.95,
+	double cl=0.95,
 	PriorFunction* prior_=0);
-
+  
+#ifdef __WITH_ROOFIT__
+    /** RooFit constructor.  
+      @param pdf    - pdf object of type RooAbsPdf
+      @param obs    - set of data objects
+      @param poi    - parameter of interest
+      @param cl     - confidence level
+      @param prior  - prior function of type RooAbsPdf (default = flat)
+   */
+  Bayes(RooAbsPdf& pdf, RooArgSet& obs, RooRealVar& poi,
+	double cl=0.95,
+	RooAbsPdf* prior_=0);
+#endif
+  
   virtual ~Bayes();
 
   /** Compute prior.
@@ -67,7 +91,7 @@ public:
   std::vector<double>& data() {return _data;}
 
   double CL() { return _cl; }
-
+  
   /// Compute Bayesian Z=sign(B10)*sqrt(2*|B10|), where B10 is the Bayes factor.
   double zvalue(double mu=1);
 
@@ -78,6 +102,10 @@ private:
   double _poimax;
   double _cl;
   PriorFunction* _prior;
+#ifdef __WITH_ROOFIT__
+  RooAbsPdf*     _rfprior;
+  RooRealVar*    _rfpoi;
+#endif
   bool   _normalize;
   
   ROOT::Math::Interpolator* _interp;  

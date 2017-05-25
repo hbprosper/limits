@@ -3,8 +3,10 @@
 // Description: Implement the multi-Poisson-Gamma model
 //              averaged over an evidence-based prior.
 // 
-// Created: June 11, 2014 HBP
-// UpdatedL June 12, 2016 HBP allow input of histograms
+// Created: 11-Jun-2014 HBP
+// Updated  12-Jun-2016 HBP allow input of histograms
+//          25-May-2017 HBP simplify config file format
+//                      warning: not backwards compatible!
 //--------------------------------------------------------------
 #include <algorithm>
 #include <iostream>
@@ -15,6 +17,7 @@
 #include "TString.h"
 #include "TFile.h"
 #include "TH1.h"
+#include "TError.h"
 #include "MultiPoissonGamma.h"
 
 using namespace std;
@@ -86,12 +89,21 @@ MultiPoissonGamma::MultiPoissonGamma(string filename)
       if (line.substr(0,1) == "#") continue;
 
       // check if a line contains the name of a root file
+      // if so, assume histogram input has been specified for
+      // all input data
       TString str(line.c_str());
       if ( str.Contains(".root") ) useHistograms = true;
       
       records.push_back(line);
     }
 
+  if (records.size() == 0)
+    {
+      Error("MultiPoisson",
+	    "zero uncommented records in file %s", filename.c_str());
+      exit(0);
+    }
+    
   // now decode 
   if ( useHistograms )
     _readRootFile(records);
@@ -103,30 +115,53 @@ void
 MultiPoissonGamma::_readTextFile(vector<string>& records)
 {
   // open input text file with format
-  // bin1   bin2   ...
+  // open input text file with format
+  // number of bins  ... 
   // count1 count2 ...
-  // sig1   sig2   ...
-  // dsig1  dsig2   ...
-  // bkg1   bkg2   ...
-  // dbkg1  dbkg2   ...
- 
-  // get header and count number of columns
-  vector<string> header;
-  stringstream hin(records[0]);
-  string line;
-  while (hin >> line) header.push_back(line);
-  int nbins = (int)header.size();
-  
-  // get counts (record 1)
+  // number of points
+  // S1   S2   ...
+  // dS1  dS2  ...
+  // B1   B2   ...
+  // dB1  dB2  ...
+
+  // get number of bins
+  _nbins = 0;
+  int lineno = 0;
+  stringstream hin(records[lineno]);
+  try
+    {
+      hin >> _nbins;
+    }
+  catch (...)
+    {
+      Error("MultiPoisson",
+	    "unable to get number of bins; check file format");
+      exit(0);
+    }  
+
+  // get observed counts
   vector<double> sig;
   vector<double> dsig;
   vector<double> bkg;
   vector<double> dbkg;
-  stringstream din(records[1]);
+  lineno++;
+  stringstream din(records[lineno]);
+  
+  int c = 0;
   double x;
-  for(int i=0; i < nbins; i++)
+  for(int i=0; i < _nbins; i++)
     {
-      din >> x;
+     try
+	{
+	  c++;
+	  din >> x;
+	}
+      catch (...)
+	{
+	  Error("MultiPoissonGamma",
+		"problem accessing observed count at bin %d", c);
+	  exit(0);	  
+	}
       _N.push_back(x);
       sig.push_back(0);
       bkg.push_back(0);
@@ -134,28 +169,63 @@ MultiPoissonGamma::_readTextFile(vector<string>& records)
       dbkg.push_back(0);
     }
   
-  // loop over sample
-  int sampleSize = (records.size()-2)/4;
-  
-  for(int c=0; c < sampleSize; c++)
+  // get number of samples
+  int samplesize = 0;
+  lineno++;
+  stringstream nin(records[lineno]);
+  try
     {
-      int offset = 1 + 4*c;
-      // get signals
-      stringstream ein(records[offset+1]);
-      for(int i=0; i < nbins; i++) ein >> sig[i];
+      nin >> samplesize;
+    }
+  catch (...)
+    {
+      Error("MultiPoissonGamma",
+	    "unable to get sample size; check file format");
+      exit(0);
+    }  
 
-      // get associated uncertainties
-      stringstream dein(records[offset+2]);
-      for(int i=0; i < nbins; i++) dein >> dsig[i];
- 
-      // get backgrounds
-      stringstream bin(records[offset+3]);
-      for(int i=0; i < nbins; i++) bin >> bkg[i];
+  // loop over sampled points  
+  for(int ii=0; ii < samplesize; ii++)
+    {
+      try
+	{
+	  // get signals
+	  lineno++;
+	  stringstream sin(records[lineno]);
+	  for(int i=0; i < _nbins; i++) sin >> sig[i];
       
-      // get background uncertainties
-      stringstream dbin(records[offset+4]);
-      for(int i=0; i < nbins; i++) dbin >> dbkg[i];
- 
+	  // get associated uncertainties
+	  lineno++;
+	  stringstream dsin(records[lineno]);
+	  for(int i=0; i < _nbins; i++) dsin >> dsig[i];
+	}
+      catch (...)
+	{
+	  Error("MultiPoisson",
+		"problem decoding signal counts:\n%s",
+		records[lineno].c_str());
+	  exit(0);      
+	}
+
+      try
+	{
+	  // get backgrounds
+	  lineno++;
+	  stringstream bin(records[lineno]);
+	  for(int i=0; i < _nbins; i++) bin >> bkg[i];
+      
+	  // get background uncertainties
+	  lineno++;
+	  stringstream dbin(records[lineno]);
+	  for(int i=0; i < _nbins; i++) dbin >> dbkg[i];
+	}
+      catch (...)
+	{
+	  Error("MultiPoisson",
+		"problem decoding background counts:\n%s",
+		records[lineno].c_str());
+	  exit(0);	  
+	}
       add(sig, dsig, bkg, dbkg);
     }
 }
@@ -164,103 +234,153 @@ void
 MultiPoissonGamma::_readRootFile(vector<string>& records)
 {
   // open input text file with format
+  // number of bins
   // root data filename      histogram name
+  // number of sampled points
   // root signal filename    histogram name
   // root backgroud filename histogram name
   //    :  :
 
-  // Get observed counts
-  istringstream iin(records[0]);
+  // get number of bins
+  _nbins = 0;
+  int lineno = 0;
+  stringstream hin(records[lineno]);
+  try
+    {
+      hin >> _nbins;
+    }
+  catch (...)
+    {
+      Error("MultiPoissonGamma",
+	    "unable to get number of bins; check file format");
+      exit(0);
+    }
 
+  // Get observed counts
   // rfilename = root file name
   // histname  = histogram name
+  lineno++;
+  istringstream iin(records[lineno]);
   string rfilename, histname;
   iin >> rfilename >> histname;
 
-  // get observed counst
   vector<double> c;
   vector<double> dc;
   _getcounts(rfilename, histname, c, dc);
-  int nbins = (int)c.size();
-
+  if (_nbins != (int)c.size())
+    Warning("MultiPoissonGamma",
+	    "number of bins specified %d != number of bins %d "
+	    "in data histogram\n"
+	    "will use smaller bin count", _nbins, (int)c.size());
+  _nbins = min(_nbins, (int)c.size());
+  
   // open output text file
   string ofilename("limits.dat");
   ofstream fout(ofilename.c_str());
   
-  // write out header
-  char record[80];
-  for(int i=0; i < nbins; i++)
-    {
-      sprintf(record, " bin%6.6d", i+1);
-      fout << record;
-    }
-  fout << endl;
+  // write out number of bins
+  fout << "# automatically generated by MultiPoissonGamma" << endl;
+  fout << "# number of bins" << endl;
+  fout << _nbins << endl;
+  
+  char arecord[10000];
   
   // write out observed counts
   fout << "# observed counts" << endl;
-  for(int i=0; i < nbins; i++)
+  for(int i=0; i < _nbins; i++)
     {
-      sprintf(record, " %9.2f", c[i]);
-      fout << record;
+      sprintf(arecord, " %9.0f", c[i]);
+      fout << arecord;
     }
   fout << endl;
-    
+
+ // get number of samples
+  int samplesize = 0;
+  lineno++;
+  stringstream nin(records[lineno]);
+  try
+    {
+      nin >> samplesize;
+    }
+  catch (...)
+    {
+      Error("MultiPoissonGamma",
+	    "unable to get sample size; check file format");
+      exit(0);
+    }
+  
+  fout << "# number of sampled points" << endl;
+  fout << samplesize << endl;
+  
   // loop over sample
-  int sampleSize = (records.size()-1)/2;
-  for(int ii=0; ii < sampleSize; ii++)
+  for(int ii=0; ii < samplesize; ii++)
     {
       // write out signals
-      istringstream in(records[ii+1]);
-      in >> rfilename >> histname;
+      lineno++;
+      istringstream sin(records[lineno]);
+      sin >> rfilename >> histname;
       _getcounts(rfilename, histname, c, dc);
-      if ( (int)c.size() != nbins )
+      if ( (int)c.size() < _nbins )
 	{
-	  cout << "** MultiPoissonGamma - mismatch in bin count" << endl
-	       << "** for histogram " << rfilename << "/" << histname << endl;
+	  Error("MultiPoissonGamma",
+		"bin count %d for histogram %s/%s < %d",
+		(int)c.size(), 
+		rfilename.c_str(),
+		histname.c_str(),
+		_nbins);
 	  exit(0);
 	}
       
-      fout << "# signals ====================== " << ii+1 << endl;
+      fout << "# " << ii+1 <<  " signal " << endl;
       
       // write out counts
-      for(int i=0; i < nbins; i++)
+      for(int i=0; i < _nbins; i++)
 	{
-	  sprintf(record, " %9.2f", c[i]);
-	  fout << record;
+	  sprintf(arecord, " %9.3e", c[i]);
+	  fout << arecord;
 	}
       fout << endl;
+      
       // write out uncertainties
-      for(int i=0; i < nbins; i++)
+      for(int i=0; i < _nbins; i++)
 	{
-	  sprintf(record, " %9.2f", dc[i]);
-	  fout << record;
+	  sprintf(arecord, " %9.3e", dc[i]);
+	  fout << arecord;
 	}
       fout << endl;
 
-      fout << "# backgrounds" << endl;
       
       // write out backgrounds
-      istringstream din(records[ii+2]);
-      din >> rfilename >> histname;
+      lineno++;
+      istringstream bin(records[lineno]);
+      bin >> rfilename >> histname;
       _getcounts(rfilename, histname, c, dc);
-      if ( (int)c.size() != nbins )
+      if ( (int)c.size() != _nbins )
 	{
-	  cout << "** MultiPoissonGamma - mismatch in bin count" << endl
-	       << "** for histogram " << rfilename << "/" << histname << endl;
+	  Error("MultiPoissonGamma",
+		"bin count %d for histogram %s/%s < %d",
+		(int)c.size(), 
+		rfilename.c_str(),
+		histname.c_str(),
+		_nbins);
 	  exit(0);
 	}
+
+      fout << "# " << ii+1 << " backgrounds" << endl;
+      
       // write out counts
-      for(int i=0; i < nbins; i++)
+      for(int i=0; i < _nbins; i++)
 	{
-	  sprintf(record, " %9.2f", c[i]);
-	  fout << record;
+	  sprintf(arecord, " %9.3e", c[i]);
+	  fout << arecord;
 	}
       fout << endl;
+      
       // write out uncertainties
-      for(int i=0; i < nbins; i++)
+      for(int i=0; i < _nbins; i++)
 	{
-	  sprintf(record, " %9.2f", dc[i]);
-	  fout << record;
+	  sprintf(arecord, " %9.3f", dc[i]);
+	  fout << arecord;
 	}
       fout << endl;      
     }
@@ -271,10 +391,11 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
   ifstream inp(ofilename.c_str());
   if ( ! inp.good() )
     {
-      cout << "** MultiPoissonGamma - unable to open file "
-	   << ofilename << endl;
+      Error("MultiPoissonGamma",
+	    "unable to open file %s", ofilename.c_str());
       exit(0);
     }
+  
   vector<string> orecords;
   string line;
   while(getline(inp, line))
@@ -299,17 +420,16 @@ MultiPoissonGamma::_getcounts(string rfilename, string histname,
   TFile rfile(rfilename.c_str());
   if ( ! rfile.IsOpen() )
     {
-      cout << "** MultiPoissonGamma - unable to open file "
-	   << rfilename << endl;
+      Error("MultiPoissonGamma", "unable to open file %s",
+	    rfilename.c_str());
       exit(0);
     }
   TH1* h = (TH1*)rfile.Get(histname.c_str());
   if ( ! h )
     {
-      cout << "** MultiPoissonGamma - unable to get histogram "
-	   << histname << endl
-	   << "** from file "
-	   << rfilename << endl;
+      Error("MultiPoissonGamma",
+	    "unable to get histogram %s from file %s",
+	    histname.c_str(), rfilename.c_str());
       exit(0);
     }
 

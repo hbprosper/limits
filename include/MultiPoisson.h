@@ -14,13 +14,16 @@
 //                      luminosity efl = eff * L rather than
 //                      eff and L separately. This makes for a
 //                      cleaner implementation.
+//          25-May-2017 HBP - use S and B instead of efl and bkg!
 //--------------------------------------------------------------
 #include <vector>
 #include <algorithm>
 #include "TRandom3.h"
 #include "PDFunction.h"
 
-/** Implement the multi-Poisson model averaged over evidence-based prior.
+/** Implement the multi-Poisson model averaged over an evidence-based prior.
+    The evidence-based prior is given as a swarm of points over signal and
+    backgrounds.
 */
 class MultiPoisson : public PDFunction
 {
@@ -41,40 +44,40 @@ class MultiPoisson : public PDFunction
   MultiPoisson(std::vector<double>& N);
  
   ///
-  ~MultiPoisson();
+  virtual ~MultiPoisson();
 	     
   /** Generate data for one experiment.
-      @param sigma - value of parameter of interest
+      @param mu - parameter of interest
   */
-  std::vector<double>& generate(double sigma);
+  std::vector<double>& generate(double mu);
   
   /** Compute likelihood.
       @param N - observed data
-      @param sigma - value of parameter of interest 
+      @param mu - parameter of interest 
   */
-  double operator() (std::vector<double>& N, double sigma);
+  double operator() (std::vector<double>& N, double mu);
 
   /** Compute likelihood using internally cached data.
-      @param sigma - value of parameter of interest 
+      @param  mu - value of parameter of interest 
   */
-  double operator() (double sigma);
+  double operator() (double mu);
 
   /** If true, profile rather than average.
       Not yet implemented.
    */
   void profile(bool yes=true) {_profile=yes;}
 
-  /** Add one set of efficiency, background, and luminosity parameters.
-      @param efl - effective luminosity parameters (efl = eff * lumi)
-      @param bkg - background parameters
+  /** Add one set of signal and background parameters.
+      @param S - signals or effective luminosities (eff * lumi)
+      @param B - backgrounds
    */
-  void add(std::vector<double>& eff, std::vector<double>& bkg);
+  void add(std::vector<double>& S, std::vector<double>& B);
 
-  /** Update effective luminosities.
+  /** Update specified signal parameter point.
    */
-  void update(int ii, std::vector<double>& efl);
+  void update(int ii, std::vector<double>& S);
   
-  /** Compute mean effective luminosities and backgrounds.
+  /** Compute mean signals and backgrounds.
    */
   void computeMeans();
   
@@ -83,27 +86,27 @@ class MultiPoisson : public PDFunction
   void setSeed(int seed);
 
   ///
-  std::vector<double> get(int ii);
+  //std::vector<std::pair<double, double> > get(int ii);
 
   ///
   std::vector<double> counts() { return _N; }
 
-  /// Return average effective luminosities (efficiency * luminosity).
-  std::vector<double> eluminosity() { return _meanefl; }
+  /// Return average signal or (efficiency * luminosity).
+  std::vector<double> signal() { return _meanS; }
 
-  /// Return average backgrounds.
-  std::vector<double> background() { return _meanbkg; }
+  /// Return average background.
+  std::vector<double> background() { return _meanB; }
 
   /// Return sample size.
-  int size() { return _efl.size(); }
+  int size() { return _S.size(); }
   
  private:
     std::vector<double> _N;
     std::vector<double> _Ngen;
-    std::vector<std::vector<double> > _efl;
-    std::vector<std::vector<double> > _bkg;
-    std::vector<double> _meanefl;
-    std::vector<double> _meanbkg;
+    std::vector<std::vector<double> > _S;
+    std::vector<std::vector<double> > _B;
+    std::vector<double> _meanS;
+    std::vector<double> _meanB;
     
     TRandom3 _random;
     int _nbins;

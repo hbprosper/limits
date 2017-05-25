@@ -21,9 +21,10 @@ $(shell mkdir -p lib)
 SRCS	:=  	$(srcdir)/Wald.cc \
 		$(srcdir)/Bayes.cc \
 		$(srcdir)/PDFunction.cc \
+		$(srcdir)/PDFWrapper.cc \
 		$(srcdir)/MultiPoisson.cc \
-		$(srcdir)/MultiPoissonGammaModel.cc \
 		$(srcdir)/MultiPoissonGamma.cc \
+		$(srcdir)/MultiPoissonGammaModel.cc \
 		$(srcdir)/mnormal.cc
 
 CINTSRCS:= $(wildcard $(srcdir)/*_dict.cc)
@@ -68,6 +69,9 @@ else
 endif
 LDFLAGS += $(shell root-config --ldflags)
 LIBS 	:= -lMathMore -lMinuit
+ifneq ($(__WITH_ROOFIT__),)
+LIBS	+= -lRooFitCore
+endif
 LIBS	+= $(shell root-config --libs)
 LIBRARY	:= $(libdir)/lib$(NAME)$(LDEXT)
 # ----------------------------------------------------------------------------

@@ -11,24 +11,28 @@
 import os, sys
 from string import atof
 from math import *
-from ROOT import gSystem, TFile, TStopwatch, kFALSE, kTRUE, vector
+from ROOT import *
 #-----------------------------------------------------------------------------
 def main():
-
+    print
+    print "-"*50
+    print "\t\texample3 - Wald"
+    print "-"*50
+    
     argv = sys.argv[1:]    
     filename = argv[0]
     if not os.path.exists(filename):
         sys.exit("** can't find file %s" % filename)
 
     if len(argv) < 2:
-        sigmamin = 0.0
+        mumin = 0.0
     else:
-        sigmamin = atof(argv[1])
+        mumin = atof(argv[1])
 
     if len(argv) < 3:
-        sigmamax = 4.0
+        mumax = 10.0
     else:
-        sigmamax = atof(argv[2])
+        mumax = atof(argv[2])
                 
     if len(argv) < 4:
         CLupper = 0.95
@@ -38,8 +42,8 @@ def main():
     # --------------------------------------
     # load limit codes
     # --------------------------------------
+    gSystem.AddDynamicPath("$LIMITS_PATH/lib")
     gSystem.Load('liblimits')
-    from ROOT import MultiPoissonGamma, Wald
         
     # --------------------------------------        
     # create model
@@ -51,13 +55,13 @@ def main():
     # --------------------------------------
     # compute Wald limits
     # --------------------------------------
-    print "=> range:            [%8.2f, %8.2f]" % (sigmamin, sigmamax)
+    print "=> range:            [%8.2f, %8.2f]" % (mumin, mumax)
     
-    wald = Wald(model, data, sigmamin, sigmamax)
+    wald = Wald(model, data, mumin, mumax)
 
     CL = 0.683
     CLlow = (1-CL)/2
-    CLupp = 1 - CLlow
+    CLupp = (1+CL)/2
     lowerlimit = wald.quantile(CLlow)
     upperlimit = wald.quantile(CLupp)
     print "=> central interval: [%8.2f, %8.2f] (%4.1f%s CL)" % \
@@ -68,7 +72,9 @@ def main():
     print "=> upper limit:       %8.2f (%4.1f%s CL)" % (limit, 100*CL, '%')
 
     # compute Z-value = sqrt(t0), where
-    #              t0 = -2 ln [L(0)/L(poi_hat)]
+    #              t0 = 2 ln [L(poi_hat)/L(0)]
+    # that is, twice the log of the likelihood of the best fit hypothesis
+    # to the null hypothesis of no signal
     mu_hat = wald.estimate()
     dmu    = wald.uncertainty()
     
@@ -88,7 +94,7 @@ try:
     if len(argv) < 1:
         exit('''
     Usage:
-       example3.py filename [xmin=0] [xmax=4] [CL(upper)=0.95]
+       example3.py filename [xmin=0] [xmax=10] [CL(upper)=0.95]
         ''')
     main() 
 except KeyboardInterrupt:
