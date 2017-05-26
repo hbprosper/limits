@@ -160,7 +160,7 @@ double Wald::zvalue(double poi)
 }
 
 
-double Wald::quantile(double CL)
+double Wald::percentile(double CL)
 {
   if ( CL > 0 ) _alpha = 1-CL;
 

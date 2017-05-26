@@ -15,9 +15,12 @@
 //      G. Cowan, K. Cranmer, E. Gross, and O. Vitells, arXiv:1007.1727v3
 // 
 // Created: 04-Jun-2015 Harrison B. Prosper
+//          26 May 2017 HBP include a base class (needed to allow
+//                      polymorphism with ExpectedLimits class)
 // ---------------------------------------------------------------------------
 #include <vector>
 #include "PDFunction.h"
+#include "LimitCalculator.h"
 // ---------------------------------------------------------------------------
 /** Compute limits based on Wald approximation.
     <p>
@@ -44,7 +47,7 @@
       G. Cowan, K. Cranmer, E. Gross, and O. Vitells, arXiv:1007.1727v3
       for an instructive discussion.
  */
-class Wald
+class Wald : public LimitCalculator
 {
  public:
   ///
@@ -64,7 +67,9 @@ class Wald
        double CL=0.95);
   
   virtual ~Wald();
- 
+
+  PDFunction* pdf() {return _model;}
+  
   /** Compute p-value given parameter of interest.
    */
   double operator()(double poi);
@@ -81,8 +86,8 @@ class Wald
    */
   double uncertainty();
   
-  /// Compute quantile.
-  double quantile(double CL=-1);
+  /// Compute percentile.
+  double percentile(double CL=-1);
 
   ///
   void setRange(double poimin, double poimax) {_poimin=poimin;_poimax=poimax;}

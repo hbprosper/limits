@@ -199,7 +199,7 @@ Bayes::cdf(double poi)
 }
 
 double 
-Bayes::quantile(double p)
+Bayes::percentile(double p)
 {
   if ( p > 0 ) _cl = p; // Credibility level
   if ( _normalize ) normalize();

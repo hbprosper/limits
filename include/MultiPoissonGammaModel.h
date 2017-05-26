@@ -192,7 +192,7 @@ class MultiPoissonGammaModel : public PDFunction
   std::vector<double> _y;
   std::vector<double> _b;
   int _maxcount;
-  ROOT::Math::Random<ROOT::Math::GSLRngMT> _gslRan;
+  ROOT::Math::Random<ROOT::Math::GSLRngMT>* _gslRan;
 };
 
 #endif

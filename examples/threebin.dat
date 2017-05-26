@@ -19,6 +19,7 @@
 	3
 	
 # observed counts
+#       bin1    bin2    bin3
 	4	13	8
 
 # number of samples

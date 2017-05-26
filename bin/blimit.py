@@ -60,13 +60,13 @@ def main():
     CL = 0.683
     CLlow = (1-CL)/2
     CLupp = 1 - CLlow
-    lowerlimit = wald.quantile(CLlow)
-    upperlimit = wald.quantile(CLupp)
+    lowerlimit = wald.percentile(CLlow)
+    upperlimit = wald.percentile(CLupp)
     print "=> central interval [%5.2f, %5.2f] (%4.1f%s) width = %5.2f" % \
       (lowerlimit, upperlimit, 100*CL, '%', upperlimit-lowerlimit)     
 
     CL = CLupper
-    limit = wald.quantile(CL)
+    limit = wald.percentile(CL)
     print "=> upper limit: %5.2f (%2.0f%sCL)\t\ttime:  %8.3fs" % \
       (limit, 100*CL, '%', swatch.RealTime())
 
@@ -87,13 +87,13 @@ def main():
     CL = 0.683
     CLlow = (1-CL)/2
     CLupp = 1 - CLlow
-    lowerlimit = bayes.quantile(CLlow)
-    upperlimit = bayes.quantile(CLupp)
+    lowerlimit = bayes.percentile(CLlow)
+    upperlimit = bayes.percentile(CLupp)
     print "=> central interval [%5.2f, %5.2f] (%4.1f%s) width = %5.2f" % \
       (lowerlimit, upperlimit, 100*CL, '%', upperlimit-lowerlimit)     
 
     CL = CLupper
-    limit = bayes.quantile(CL)
+    limit = bayes.percentile(CL)
     print "=> upper limit: %5.2f (%2.0f%sCL)\t\ttime:  %8.3fs" % \
       (limit, 100*CL, '%', swatch.RealTime())
 

@@ -10,12 +10,15 @@
 //          30 May 2015 HBP add a constructor to take RooFit
 //                      models directly rather than through
 //                      PDFWrapper
-//
+//          24 May 2017 HBP made dependence on RooFit optional
+//          26 May 2017 HBP include a base class (needed to allow
+//                      polymorphism with ExpectedLimits class)
 //--------------------------------------------------------------
 #include <vector>
 #include <string>
 #include "PDFunction.h"
 #include "PriorFunction.h"
+#include "LimitCalculator.h"
 #include "Math/Interpolator.h"
 #ifdef __WITH_ROOFIT__
 #include "PDFWrapper.h"
@@ -26,7 +29,7 @@
 //--------------------------------------------------------------
 /** Compute Bayesian limits.
  */
-class Bayes
+class Bayes : public LimitCalculator
 {
 public:
   Bayes () {}
@@ -61,6 +64,11 @@ public:
   
   virtual ~Bayes();
 
+  /**
+   */
+
+  PDFunction* pdf() {return _pdf;}
+  
   /** Compute prior.
    */  
   double prior(double poi);
@@ -80,8 +88,8 @@ public:
   /// Compute cdf of posterior density.
   double cdf(double poi);
 
-  /// Compute p-quantile of posterior density.
-  double quantile(double p=-1);
+  /// Compute percentile of posterior density.
+  double percentile(double p=-1);
 
   /// Compute MAximum Posterior estimate (mode of posterior density).
   void MAP(double CL, std::vector<double>& results);

@@ -163,6 +163,7 @@ MultiPoissonGamma::_readTextFile(vector<string>& records)
 	  exit(0);	  
 	}
       _N.push_back(x);
+      _Ngen.push_back(0);
       sig.push_back(0);
       bkg.push_back(0);
       dsig.push_back(0);

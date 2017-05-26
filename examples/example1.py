@@ -135,7 +135,7 @@ def main():
     
     print "compute limit"        
     bayes = Bayes(model, data, mumin, mumax, CL)
-    limit = bayes.quantile()
+    limit = bayes.percentile()
     print "=> limit: %6.1f fb @ %2.0f%s CL\n   time:  %8.3fs" % \
       (limit, 100*CL, '%', swatch.RealTime())
 #-----------------------------------------------------------------------------

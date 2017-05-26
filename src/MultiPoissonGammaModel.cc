@@ -28,7 +28,7 @@ MultiPoissonGammaModel::MultiPoissonGammaModel()
     _y(vector<double>()),
     _b(vector<double>()),
     _maxcount(100000),
-    _gslRan(ROOT::Math::Random<ROOT::Math::GSLRngMT>())
+    _gslRan(new ROOT::Math::Random<ROOT::Math::GSLRngMT>())
 {}
 
 MultiPoissonGammaModel::MultiPoissonGammaModel(vector<double>& data,
@@ -44,7 +44,7 @@ MultiPoissonGammaModel::MultiPoissonGammaModel(vector<double>& data,
     _y(y),
     _b(vector<double>(x.size(), b)),
     _maxcount(maxcount),
-    _gslRan(ROOT::Math::Random<ROOT::Math::GSLRngMT>())
+    _gslRan(new ROOT::Math::Random<ROOT::Math::GSLRngMT>())
 {
 }
 
@@ -61,7 +61,7 @@ MultiPoissonGammaModel::MultiPoissonGammaModel(vector<double>& data,
     _y(y),
     _b(b),
     _maxcount(maxcount),
-    _gslRan(ROOT::Math::Random<ROOT::Math::GSLRngMT>())
+    _gslRan(new ROOT::Math::Random<ROOT::Math::GSLRngMT>())
 {
   if(_x.size() != _b.size() ||
      _x.size() != _a.size() ||
@@ -86,7 +86,7 @@ MultiPoissonGammaModel::MultiPoissonGammaModel(double data,
     _y(vector<double>(1, y)),
     _b(vector<double>(1, b)),
     _maxcount(maxcount),
-    _gslRan(ROOT::Math::Random<ROOT::Math::GSLRngMT>())
+    _gslRan(new ROOT::Math::Random<ROOT::Math::GSLRngMT>())
 {
 }
 
@@ -105,10 +105,17 @@ MultiPoissonGammaModel::generate(double sigma)
       
   for(size_t ibin=0; ibin < _x.size(); ++ibin)
     {
-      double epsilon = _gslRan.Gamma(_x[ibin]+0.5, 1.0/_a[ibin]);
-      double mu      = _gslRan.Gamma(_y[ibin]+0.5, 1.0/_b[ibin]);
+      double epsilon = _gslRan->Gamma(_x[ibin]+0.5, 1.0/_a[ibin]);
+      //cout << "epsilon " << epsilon << endl;
+            
+      double mu      = _gslRan->Gamma(_y[ibin]+0.5, 1.0/_b[ibin]);
+      //cout << "mu      " << mu << endl;
+      
       double mean    = epsilon * sigma + mu;
-      _data[ibin]    = _gslRan.Poisson(mean);
+      //cout << "mean    " << mean << endl;
+      
+      _data[ibin]    = _gslRan->Poisson(mean);
+      //cout << "data  = " << _data[ibin] << endl;
     }
   return _data;
 }

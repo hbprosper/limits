@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #-----------------------------------------------------------------------------
-# File:        example3.py
-# Description: Compute 
+# File:        example4.py
+# Description: Compute limits including expected limits
 #              Example usage:
-#                 example3.py input-file [xmin=0] [xmax=4] [CLupper=0.95]
+#                 example4.py input-file [xmin=0] [xmax=10] [CLupper=0.95]
 #
 # Created:     01-Jun-2016 HBP Bari
 #              22-Jun-2016 HBP add ability to read histograms
@@ -16,7 +16,7 @@ from ROOT import *
 def main():
     print
     print "-"*50
-    print "\t\texample3 - Wald"
+    print "\t\texample4 - Wald expected limits"
     print "-"*50
     
     argv = sys.argv[1:]    
@@ -70,7 +70,7 @@ def main():
     CL = CLupper
     limit = wald.percentile(CL)
     print "=> upper limit:       %8.2f (%4.1f%s CL)" % (limit, 100*CL, '%')
-
+    
     # compute Z-value = sqrt(t0), where
     #              t0 = 2 ln [L(poi_hat)/L(0)]
     # that is, twice the log of the likelihood of the best fit hypothesis
@@ -88,6 +88,23 @@ def main():
     
     relErr = (upperlimit+lowerlimit)/(upperlimit-lowerlimit)    
     print "=> mu_hat/dmu (2):    %8.2f" % relErr
+
+
+    # --------------------------------------
+    # compute expected Wald limits
+    # --------------------------------------
+    expected = ExpectedLimits(wald)
+    swatch = TStopwatch()
+    swatch.Start()
+    print
+    print "computing expected limit assuming a signal is present at the predicted rate"
+    percentiles= expected(1)
+    prob = expected.prob()
+    print "time:  %8.3fs" % swatch.RealTime()
+    print "%8s\t%8s" % ('prob', 'limit')    
+    for i, q in enumerate(percentiles):
+        print "%8.3f\t%8.2f" % (prob[i], q)
+        
 #-----------------------------------------------------------------------------
 try:
     argv = sys.argv[1:]

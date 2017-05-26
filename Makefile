@@ -25,6 +25,7 @@ SRCS	:=  	$(srcdir)/Wald.cc \
 		$(srcdir)/MultiPoisson.cc \
 		$(srcdir)/MultiPoissonGamma.cc \
 		$(srcdir)/MultiPoissonGammaModel.cc \
+		$(srcdir)/ExpectedLimits.cc \
 		$(srcdir)/mnormal.cc
 
 CINTSRCS:= $(wildcard $(srcdir)/*_dict.cc)
