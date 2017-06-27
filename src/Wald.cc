@@ -29,8 +29,8 @@ using namespace std;
 // ---------------------------------------------------------------------------
 // function to be minimized
 namespace {
-  const int MAXITER=1000;
-  const double TOLERANCE=1.e-3;
+  const int MAXITER=10000;
+  const double TOLERANCE=1.e-5;
   Wald* OBJ=0;
   void nllFunc(int&    /*npar*/, 
 	       double* /*grad*/, 
@@ -79,7 +79,7 @@ double Wald::fit(double guess)
 
   int status=0;
   if ( guess < 0 ) guess = (_poimax + _poimin)/2;
-  double stepsize = (_poimax - _poimin)/100;
+  double stepsize = (_poimax - _poimin)/2000;
   minuit.mnparm(0, "poi", guess, stepsize, 
 		_poimin, _poimax, status);
   double args[2] = {MAXITER, TOLERANCE};

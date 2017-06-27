@@ -71,7 +71,7 @@ def createInputs(filename, N, S, dS, B, dB):
         out.write('# backgrounds\n')
         out.write('\t%10.4e\n' % B)
     else:
-        ntrial = 500
+        ntrial = 400
         gamma_S, beta_S = computeGammaConstants(S, dS)
         gamma_B, beta_B = computeGammaConstants(B, dB)
         out.write('# number of sampled points\n')
@@ -103,9 +103,17 @@ def main():
     # --------------------------------------
     # load limit codes
     # --------------------------------------
-    gSystem.AddDynamicPath("$LIMITS_PATH/lib")
-    gSystem.Load('liblimits')
-
+    if os.environ.has_key('LIMITS_PATH'):
+        gSystem.AddDynamicPath("$LIMITS_PATH/lib")
+        gSystem.Load('liblimits')
+    else:
+        sys.exit('''
+    please do
+        cd ..
+        source setup.sh
+    to define environment variable LIMITS_PATH
+        ''')
+        
     # --------------------------------------        
     # get results
     # --------------------------------------            

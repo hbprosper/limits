@@ -111,7 +111,7 @@ try:
     if len(argv) < 1:
         exit('''
     Usage:
-       example3.py filename [xmin=0] [xmax=10] [CL(upper)=0.95]
+       example4.py filename [xmin=0] [xmax=10] [CL(upper)=0.95]
         ''')
     main() 
 except KeyboardInterrupt:

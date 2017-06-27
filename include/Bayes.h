@@ -92,12 +92,17 @@ public:
   double percentile(double p=-1);
 
   /// Compute MAximum Posterior estimate (mode of posterior density).
-  void MAP(double CL, std::vector<double>& results);
+  std::pair<double, double> MAP(double CL=0.683);
   
   void setData(std::vector<double>& d) { _data = d; normalize(); }
   
   std::vector<double>& data() {return _data;}
 
+  std::pair<double, double> support()
+  {
+    return std::pair<double, double>(_poimin, _poimax);
+  }
+  
   double CL() { return _cl; }
   
   /// Compute Bayesian Z=sign(B10)*sqrt(2*|B10|), where B10 is the Bayes factor.

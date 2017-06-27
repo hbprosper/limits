@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <cassert>
 #include <algorithm>
 #include <stdlib.h>
 
@@ -26,8 +27,8 @@ using namespace std;
 
 // function to be minimized
 namespace {
-  const int MAXITER=1000;
-  const double TOLERANCE=1.e-4;
+  const int MAXITER=10000;
+  const double TOLERANCE=1.e-5;
   Bayes* OBJ=0;
   void nlpFunc(int&    /*npar*/, 
 	       double* /*grad*/, 
@@ -58,11 +59,13 @@ Bayes::Bayes(PDFunction& model,
 #endif
     _normalize(true),
     _interp(0),
-    _nsteps(200),
+    _nsteps(50),
     _x(vector<double>()),
     _y(vector<double>())
 {
+  assert( _poimax > _poimin ); 
   OBJ = this;
+  normalize();
 }
 
 #ifdef __WITH_ROOFIT__
@@ -79,11 +82,12 @@ Bayes::Bayes(RooAbsPdf& pdf, RooArgSet& obs, RooRealVar& poi,
     _rfpoi(&poi),
     _normalize(true),
     _interp(0),
-    _nsteps(200),
+    _nsteps(50),
     _x(vector<double>()),
     _y(vector<double>())    
 {
   OBJ = this;
+  normalize();
   RooArgList list(obs);
   for(size_t c=0; c < _data.size(); c++)
     {
@@ -130,46 +134,105 @@ Bayes::likelihood(double poi)
 double 
 Bayes::normalize()
 {
-  ROOT::Math::WrappedMemFunction<Bayes, double (Bayes::*)(double)> 
-    fn(*this, &Bayes::_likeprior);
-  ROOT::Math::Integrator ifn(fn);
-  _normalization = ifn.Integral(_poimin, _poimax);
-  _normalize = false;
+  // try to optimize support of likelihood x prior density
+  int   nsteps = 2 * _nsteps;
+  vector<double> p(nsteps+1);
+  double step  = 0;
+  for(int ii=0; ii < 2; ii++)
+    {
+      double pmax = 0.0;
+      int    mode = 0;
+      _poimax += step;      
+      step = (_poimax - _poimin) / nsteps;
+      
+      for(int i=0; i < nsteps+1; i++)
+	{
+	  double xx = _poimin + i*step;
+	  p[i] = _likeprior(xx);
+      
+	  if ( p[i] > pmax )
+	    {
+	      pmax = p[i];
+	      mode = i;
+	    }
+	}
+
+      // find left edge of support
+      double factor = 1.e-5;
+      int jj = 0;
+      for(int i=0; i < mode; i++)
+	{
+	  if (p[i] < factor * pmax)
+	    jj = i;
+	  else
+	    break;
+	}
+      _poimin = jj * step;
   
-  // Compute cdf at several points
-  vector<double> p(_nsteps+1);
-  double step = (_poimax - _poimin)/_nsteps;
-  for(int i=0; i < _nsteps+1; i++)
+      // find right edge of support  
+      for(int i=mode; i < nsteps+1; i++)
+	{
+	  if (p[i] < factor * pmax)
+	    break;
+	  else
+	    jj = i;
+	}
+      _poimax = jj * step;
+    }
+  assert( _poimax > _poimin );
+
+  // now that wew have the support, calculate the unnormalized posterior
+  // density at equal intervals;
+  step = (_poimax - _poimin) / nsteps;
+  for(int i=0; i < nsteps+1; i++)
     {
       double xx = _poimin + i*step;
-      p[i] = posterior(xx);
+      p[i] = _likeprior(xx);
     }
 
-  vector<double> c1(_nsteps, 0);
-  for(int i=1; i < _nsteps+1; i++)
-    c1[i] = c1[i-1] + 0.5*step*(p[i]+p[i-1]);
   
-  _x.clear();
-  _y.clear();
-  double c2 = 0;
-  _x.push_back(_poimin);
-  _y.push_back(c2);
-  for(int i=2; i < _nsteps+1; i+=2)
+  // ROOT::Math::WrappedMemFunction<Bayes, double (Bayes::*)(double)> 
+  //   fn(*this, &Bayes::_likeprior);
+  // ROOT::Math::Integrator ifn(fn);
+  // _normalization = ifn.Integral(_poimin, _poimax);
+  // _normalize = false;
+
+  // // compute posterior density over its support
+  // step = (_poimax - _poimin)/ _nsteps;
+  // for(int i=0; i < _nsteps+1; i++)
+  //   {
+  //     double poi = _poimin + i*step;
+  //     p[i] = posterior(poi);
+  //     //printf("%10.3f\t%10.3e\n", poi, p[i]);
+  //   }
+
+  // Compute cdf at several points
+
+  step *= 2;
+  double scale = step / 6;
+  _x.resize(_nsteps+1);
+  _y.resize(_nsteps+1);
+  _x[0] = _poimin;
+  _y[0] = 0;
+  for(int i=1; i < nsteps+1; i+=2)
     {
-      double p1 = p[i-2];
-      double p2 = p[i];
-      c2 += step*(p2+p1);
-      
-      _x.push_back(_poimin + i*step);          
-      double z = (4*c1[i]-c2)/3;
-      if ( z > 1 ) z = 1;
-      _y.push_back(z);
+      int j = (i + 1) / 2;
+      _x[j] = _poimin + j * step;
+      _y[j] = _y[j-1] + scale *  (p[i+1] + 4 * p[i] + p[i-1]);
+      //printf("i[%d], j[%d], _x[%f], _y[%e]\n", i, j, _x[j], _y[j]);
     }
+  assert(abs(_x.back() - _poimax) < 1.e-4 * _poimax);
+  _poimax = _x.back();
+  
+  _normalization = _y.back();
+  for(int i=0; i < _nsteps+1; i++) _y[i] /= _normalization;
+  _normalize = false;
 
   if ( _interp == 0)
     _interp = new ROOT::Math::Interpolator(_x.size(),
 					   ROOT::Math::
-					   Interpolation::kCSPLINE);
+					   Interpolation::kLINEAR);
+					   //Interpolation::kCSPLINE);
   _interp->SetData(_x, _y);
 
   return _normalization;
@@ -220,8 +283,8 @@ Bayes::percentile(double p)
   return rootfinder.Root();
 }
 
-void
-Bayes::MAP(double CL, vector<double>& results)
+pair<double, double>
+Bayes::MAP(double CL)
 {
   if ( _normalize ) normalize();
 
@@ -235,7 +298,7 @@ Bayes::MAP(double CL, vector<double>& results)
 
   int status=0;
   double guess = (_poimax+_poimin)/2;
-  double stepsize = (_poimax-_poimin)/100;
+  double stepsize = (_poimax-_poimin)/10000;
   minuit.mnparm(0, "poi", guess, stepsize, 
 		_poimin, _poimax, status);
   double args[2] = {MAXITER, TOLERANCE};
@@ -243,7 +306,7 @@ Bayes::MAP(double CL, vector<double>& results)
   if ( status != 0 )
     {
       cout << "Bayes::MAP failed to find MAP" << endl;
-      return;
+      return pair<double, double>(0,0);
     }
   
   // get fit result
@@ -251,15 +314,16 @@ Bayes::MAP(double CL, vector<double>& results)
   double poierr = 0.0;
   minuit.GetParameter(0, poihat, poierr);
 
-  // get MINOS errors
-  double upper, lower, perror, gcc;
-  minuit.mnerrs(0, upper, lower, perror, gcc);
-  if ( (int)results.size() > 0 ) results[0] = poihat;
-  if ( (int)results.size() > 1 ) results[1] = upper;
-  if ( (int)results.size() > 2 ) results[2] = lower;
-  if ( (int)results.size() > 3 ) results[3] = perror;
-  if ( (int)results.size() > 4 ) results[4] = gcc;
-  return;
+  pair<double, double> result(poihat, poierr);
+  // // get MINOS errors
+  // double upper, lower, gcc;
+  // minuit.mnerrs(0, upper, lower, perror, gcc);
+  // if ( (int)results.size() > 0 ) results[0] = poihat;
+  // if ( (int)results.size() > 1 ) results[1] = upper;
+  // if ( (int)results.size() > 2 ) results[2] = lower;
+  // if ( (int)results.size() > 3 ) results[3] = poierr;
+  // if ( (int)results.size() > 4 ) results[4] = gcc;
+  return result;
 }
 
 double 

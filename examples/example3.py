@@ -14,6 +14,20 @@ from math import *
 from ROOT import *
 #-----------------------------------------------------------------------------
 def main():
+    # --------------------------------------
+    # load limit codes
+    # --------------------------------------
+    if os.environ.has_key('LIMITS_PATH'):
+        gSystem.AddDynamicPath("$LIMITS_PATH/lib")
+        gSystem.Load('liblimits')
+    else:
+        sys.exit('''
+    please do
+        cd ..
+        source setup.sh
+    to define environment variable LIMITS_PATH
+        ''')
+                
     print
     print "-"*50
     print "\t\texample3 - Wald"
@@ -38,12 +52,6 @@ def main():
         CLupper = 0.95
     else:
         CLupper = atof(argv[3])
-        
-    # --------------------------------------
-    # load limit codes
-    # --------------------------------------
-    gSystem.AddDynamicPath("$LIMITS_PATH/lib")
-    gSystem.Load('liblimits')
         
     # --------------------------------------        
     # create model

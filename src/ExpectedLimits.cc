@@ -20,18 +20,19 @@ vector<double> ExpectedLimits::dummy;
 
 ExpectedLimits::ExpectedLimits()
   : _calculator(0),
-    _prob(dummy),
     _ensemblesize(0),
+    _prob(dummy),
     _debuglevel(0)
 {}
 
 
 ExpectedLimits::ExpectedLimits(LimitCalculator& calculator,
-			       std::vector<double>& prob,
-			       int ensemblesize)	       
+			       int ensemblesize,
+			       std::vector<double>& prob)
+			       
   : _calculator(&calculator),
-    _prob(prob),
     _ensemblesize(ensemblesize),
+    _prob(prob),
     _limit(vector<double>(ensemblesize)),
     _debuglevel(0)
 {
@@ -71,12 +72,12 @@ ExpectedLimits::operator()(double mu, int ensemblesize)
   
   for(int c=0; c < samplesize; c++)
     {
-      if ( c % 100 == 0 ) cout << c << endl;
+      if ( c % 10 == 0 ) cout << "\tgenerating sample:\t" << c;
       
       // generate a data set assuming the background only hypothesis
       // that is, mu=0
       vector<double>& d = _calculator->pdf()->generate(mu);
-      if ( _debuglevel > 1 )
+      if ( _debuglevel > 2 )
 	{
 	  cout << endl << c << "\tgenerated data:" << endl;
 	  for(size_t ii=0; ii < d.size(); ii++)
@@ -92,7 +93,7 @@ ExpectedLimits::operator()(double mu, int ensemblesize)
       
       // compute limit
       _limit[c] = _calculator->percentile();
-      if ( _debuglevel > 0 )
+      if ( c % 10 == 0 )
 	cout << "\tlimit = " << _limit[c] << endl;
     }
   

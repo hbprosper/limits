@@ -25,12 +25,12 @@ public:
   ExpectedLimits ();
 
   /** Compute quantiles of limits distribution, generated internally.
-      @param calculator  - limit calculator (Bayes or Wald)
       @param ensemble size - size of ensemble of limits
+      @param calculator  - limit calculator (Bayes or Wald)
   */
   ExpectedLimits(LimitCalculator& calculator,
-		 std::vector<double>& prob_=dummy,
-		 int ensemblesize=400);
+		 int ensemblesize=200,
+		 std::vector<double>& prob_=dummy);
 
   virtual ~ExpectedLimits();
 
@@ -40,8 +40,8 @@ public:
   
 private:
   LimitCalculator* _calculator;
-  std::vector<double> _prob;
   int _ensemblesize;
+  std::vector<double> _prob;
   std::vector<double> _limit;
 
   int _debuglevel;

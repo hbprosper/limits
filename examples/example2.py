@@ -16,6 +16,7 @@ def main():
     print "-"*50
     print "\t\texample2 - onebin, threebin"
     print "-"*50
+            
     os.system('blimit.py onebin.dat   0 10.0 0.95')
     os.system('blimit.py threebin.dat 0 10.0 0.95')     
 #-----------------------------------------------------------------------------

@@ -238,10 +238,9 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
   // number of bins
   // root data filename      histogram name
   // number of sampled points
-  // root signal filename    histogram name
-  // root backgroud filename histogram name
+  // root signal filename    histogram name  [rel-uncertainty]
+  // root backgroud filename histogram name  [rel-uncertainty] 
   //    :  :
-
   // get number of bins
   _nbins = 0;
   int lineno = 0;
@@ -294,8 +293,8 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
       fout << arecord;
     }
   fout << endl;
-
- // get number of samples
+  
+  // get number of samples
   int samplesize = 0;
   lineno++;
   stringstream nin(records[lineno]);
@@ -314,9 +313,10 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
   fout << samplesize << endl;
   
   // loop over sample
+  
   for(int ii=0; ii < samplesize; ii++)
     {
-      // write out signals
+      // write out signals      
       lineno++;
       istringstream sin(records[lineno]);
       sin >> rfilename >> histname;
@@ -335,12 +335,14 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
       fout << "# " << ii+1 <<  " signal " << endl;
       
       // write out counts
+	
       for(int i=0; i < _nbins; i++)
 	{
 	  sprintf(arecord, " %9.3e", c[i]);
 	  fout << arecord;
 	}
       fout << endl;
+      fout << "# signal uncertainties" << endl;
       
       // write out uncertainties
       for(int i=0; i < _nbins; i++)
@@ -350,7 +352,6 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
 	}
       fout << endl;
 
-      
       // write out backgrounds
       lineno++;
       istringstream bin(records[lineno]);
@@ -376,11 +377,12 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
 	  fout << arecord;
 	}
       fout << endl;
+      fout << "# background uncertainties" << endl;
       
       // write out uncertainties
       for(int i=0; i < _nbins; i++)
 	{
-	  sprintf(arecord, " %9.3f", dc[i]);
+	  sprintf(arecord, " %9.3e", dc[i]);
 	  fout << arecord;
 	}
       fout << endl;      
@@ -481,6 +483,9 @@ void MultiPoissonGamma::add(vector<double>& sig, vector<double>& dsig,
   _convert(bkg, dbkg, y, b);
 
   _model.push_back( MultiPoissonGammaModel(_N, x, a, y, b) );
+  if ( _model.size() % 50 == 0 )
+    cout << "=> MultiPoissonGamma: added "
+	 << _model.size() << " distributions" << endl;
 }
 
 void MultiPoissonGamma::update(int ii,

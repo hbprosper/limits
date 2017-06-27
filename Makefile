@@ -55,7 +55,7 @@ LD		:= g++
 endif
 
 CPPFLAGS	:= -I. -I$(incdir)
-CXXFLAGS	:= -O -Wall -fPIC -g -ansi -Wshadow -Wextra \
+CXXFLAGS	:= -O2 -Wall -fPIC -g -ansi -Wshadow -Wextra \
 $(shell root-config --cflags)
 LDFLAGS		:= -g
 # ----------------------------------------------------------------------------

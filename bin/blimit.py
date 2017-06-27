@@ -3,42 +3,49 @@
 # File:        blimit.py
 #
 #              Example usage:
-#                 blimit.py input-file [xmin=0] [xmax=4] [CLupper=0.95]
+#                 blimit.py input-file [xmin=0] [xmax=10] [CLupper=0.95]
 #
 # Created:     17-Jun-2015 HBP Les Houches
 #-----------------------------------------------------------------------------
 import os, sys
 from string import atof
 from math import *
-from ROOT import gSystem, TFile, TStopwatch, kFALSE, kTRUE, vector
+from ROOT import *
 #-----------------------------------------------------------------------------
 def main():
-
+    # --------------------------------------
+    # load limit codes
+    # --------------------------------------
+    if os.environ.has_key('LIMITS_PATH'):
+        gSystem.AddDynamicPath("$LIMITS_PATH/lib")
+        gSystem.Load('liblimits')
+    else:
+        sys.exit('''
+    please do
+        cd ..
+        source setup.sh
+    to define environment variable LIMITS_PATH
+        ''')
+            
     argv = sys.argv[1:]    
     filename = argv[0]
     if not os.path.exists(filename):
         sys.exit("** can't find file %s" % filename)
 
     if len(argv) < 2:
-        sigmamin = 0.0
+        mumin = 0.0
     else:
-        sigmamin = atof(argv[1])
+        mumin = atof(argv[1])
 
     if len(argv) < 3:
-        sigmamax = 4.0
+        mumax = 10.0
     else:
-        sigmamax = atof(argv[2])
+        mumax = atof(argv[2])
                 
     if len(argv) < 4:
         CLupper = 0.95
     else:
         CLupper = atof(argv[3])
-        
-    # --------------------------------------
-    # load limit codes
-    # --------------------------------------
-    gSystem.Load('liblimits')
-    from ROOT import MultiPoissonGamma, Bayes, Wald
         
     # --------------------------------------        
     # create model
@@ -53,13 +60,13 @@ def main():
     swatch = TStopwatch()
     swatch.Start()
 
-    print "Wald\t\trange: [%8.1f,%8.1f]" % (sigmamin, sigmamax)
+    print "Wald\t\trange: [%8.1f,%8.1f]" % (mumin, mumax)
     
-    wald = Wald(model, data, sigmamin, sigmamax)
+    wald = Wald(model, data, mumin, mumax)
 
     CL = 0.683
     CLlow = (1-CL)/2
-    CLupp = 1 - CLlow
+    CLupp = (1+CL)/2
     lowerlimit = wald.percentile(CLlow)
     upperlimit = wald.percentile(CLupp)
     print "=> central interval [%5.2f, %5.2f] (%4.1f%s) width = %5.2f" % \
@@ -78,15 +85,15 @@ def main():
     # --------------------------------------
     # compute Bayes limits
     # --------------------------------------
-    print "\nBayes\t\trange: [%8.1f,%8.1f]" % (sigmamin, sigmamax)    
+    print "\nBayes\t\trange: [%8.1f,%8.1f]" % (mumin, mumax)    
     swatch = TStopwatch()
     swatch.Start()
     
-    bayes = Bayes(model, data, sigmamin, sigmamax)
+    bayes = Bayes(model, data, mumin, mumax)
     
     CL = 0.683
     CLlow = (1-CL)/2
-    CLupp = 1 - CLlow
+    CLupp = (1+CL)/2
     lowerlimit = bayes.percentile(CLlow)
     upperlimit = bayes.percentile(CLupp)
     print "=> central interval [%5.2f, %5.2f] (%4.1f%s) width = %5.2f" % \
