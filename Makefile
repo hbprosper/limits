@@ -69,10 +69,21 @@ else
 	LDEXT	:= .so
 endif
 LDFLAGS += $(shell root-config --ldflags)
-LIBS 	:= -lMathMore -lMinuit
+
+# libraries
+LIBS 	:= -lMinuit
+
+# check for MathMore
+ifneq ($(shell find `root-config --libdir`/libMathMore*),)
+LIBS	:= -lMathMore
+else
+$(error This package requires the ROOT MathMore library, which depends on the GNU Scientific Library (GSL). Install GSL, ./configure ROOT and do make to build libMathMore.so)
+endif
+
 ifneq ($(__WITH_ROOFIT__),)
 LIBS	+= -lRooFitCore
 endif
+LIBS	+= -lMinuit
 LIBS	+= $(shell root-config --libs)
 LIBRARY	:= $(libdir)/lib$(NAME)$(LDEXT)
 # ----------------------------------------------------------------------------

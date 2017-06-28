@@ -1,14 +1,27 @@
 # limits
-This is a simple (but reasonably general) standalone Bayesian limit calculator for analyses based on Poisson data, specifically, analyses that can be modeled using multi-Poisson or multi-Poisson-gamma likelihoods. For both models, the data comprise one or more observed counts, that is, bins. For the multi-Poisson model, we assume that a swarm of points (in 2 x _M_-dimensions, where _M_ is the number of bins) is available for the *parameters*, either the signals or the effective integrated luminosities (acceptance x efficiency x integrated luminosity) and backgrounds. The signal and background points are presumed to have been generated in another application through some sampling procedure. 
+This is a simple (but reasonably general) standalone Bayesian limit calculator for analyses based on Poisson data, specifically, analyses that can be modeled using multi-Poisson or multi-Poisson-gamma likelihoods. For both models, the data comprise one or more observed counts. For the multi-Poisson model, we assume that a swarm of points (in 2 x _M_-dimensions, where _M_ is the number of counts) is available for the *parameters*, either the signals or the effective integrated luminosities (acceptance x efficiency x integrated luminosity) and backgrounds. The signal and background points are presumed to have been generated in another application through some sampling procedure. 
 
-For the multi-Poisson-gamma model, in which the signal and background parameters are marginalized (that is, integrated) over, we assume that our knowledge of these parameters can be modeled using gamma prior densities whose shape parameters are determined by identifying each *estimate* of a parameter with the mode of the associated gamma density and taking the *uncertainty* to be the gamma density's standard deviation. Marginalization over systematic effects is accomplished, as with the multi-Poisson model, by averaging over the swarm of points in 2M-dimensions in which each point is the result of a different random sampling of the systematic effects. Typically, the sampling is done by identifying the sources of systematic error, specifying algorithmically how each affects the objects whose attributes ultimately feed into the signal and total background yields in each bin. 
+For the multi-Poisson-gamma model, in which the signal and background
+parameters are marginalized over (that is, integrated out), we assume
+that our knowledge of these parameters can be modeled using gamma
+prior densities whose shape parameters are determined by identifying
+each *estimate* of a parameter with the mode of the associated gamma
+density and taking the *uncertainty* to be the gamma density's
+standard deviation. Marginalization over systematic effects is
+accomplished, as with the multi-Poisson model, by averaging over the
+swarm of points in 2M-dimensions in which each point is the result of
+a different random sampling of the systematic effects. Typically, the
+sampling is done by identifying the sources of systematic error,
+specifying algorithmically how each affects the objects whose
+attributes ultimately feed into the signal and total background
+bin-by-bin yields. 
 
 For example, the true value of the *jet energy scale* (JES) is unknown; but we have an estimate of it and an associated uncertainty. Typically, both of these depend on the transverse momentum and rapidity of the jet. The probability density function (pdf) of the JES is often modeled as a Gaussian. For a given run of an analysis, a single random number _x_ is sampled from a zero mean unit width Gaussian and the transverse momentum of every jet in the sample of events is rescaled by 1 + _x_ * _sigma_, where _sigma_ is the standard deviation of the JES pdf for a given jet. The procedure is repeated a few hundred times, usually by running the multiple instances of the analysis in parallel. A similar procedure is followed for all other sources of systematic error. All such quantities should be sampled simultaneously. That way any complicated non-linear interactions induced in the signal and background yields by the systematic errors will be automatically taken into account without the need to assess how each of the  2 x _M_ yields are affected by these errors and what correlations, and what strength of correlation, exist between the yields due to the systematic errors. Furthermore, this procedure scales well with the number of systematic effects since all are sampled simultaneously.
 
-### Setup
-This package uses *Root* compiled with *mathmore*, which in turn requires the GNU Scientific Library (GSL), which is may be found at this website: http://www.gnu.org/software/gsl/
+## Setup
+This package uses *ROOT* compiled with *mathmore*, which in turn requires the GNU Scientific Library (GSL), which is may be found at this website: http://www.gnu.org/software/gsl/
 
-Once GSL is installed, install Root. You may have to tell Root the location of your GSL installation. To do so, just follow the README instructions that comes with Root. Then, to build _limits_ do
+Once GSL is installed, install Root. You may have to tell ROOT the location of your GSL installation. To do so, just follow the README instructions that comes with ROOT. Then, to build _limits_ do
 ```
 	make
 ```
@@ -19,6 +32,9 @@ To setup do
 	or
 	source setup.csh (for non-bash shells)
 ```
+	
+## Examples
+	
 ### Example 1
 Usage:
 ```
@@ -186,12 +202,29 @@ Usage:
 
 The format of the input-file is:
 ```
-number of bins     
+number of bins
 count1	count2 		...
+number of samples
 S1	S2         	...
 dS1	dS2       	...
 B1	B2        	...
 dB1	dB2       	...
-	
+	: 
 (See comments in example1.py above.)
 ```
+
+## Using Histograms
+
+When the number of bins is large (say > 10), it may be more convenient
+to specify the counts and yields as ROOT histograms. The format is:
+```
+number of bins
+data-root-filename  data-histogram-name
+number of samples
+signal-root-filename signal-histogram-name
+background-root-filename background-histogram name
+	:    :
+```
+Lines starting with # are treated as comments. The number of samples
+is the number of pairs of signal/background files, which collectively
+account for systematic uncertainties.

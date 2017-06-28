@@ -69,10 +69,10 @@ ExpectedLimits::operator()(double mu, int ensemblesize)
   _limit.resize(samplesize);
   
   char record[80];
-  
+  int step = samplesize / 4;
   for(int c=0; c < samplesize; c++)
     {
-      if ( c % 10 == 0 ) cout << "\tgenerating sample:\t" << c;
+      if ( c % step == 0 ) cout << "\tgenerating sample:\t" << c;
       
       // generate a data set assuming the background only hypothesis
       // that is, mu=0
@@ -93,7 +93,7 @@ ExpectedLimits::operator()(double mu, int ensemblesize)
       
       // compute limit
       _limit[c] = _calculator->percentile();
-      if ( c % 10 == 0 )
+      if ( c % step == 0 )
 	cout << "\tlimit = " << _limit[c] << endl;
     }
   
