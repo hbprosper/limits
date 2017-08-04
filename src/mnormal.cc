@@ -37,13 +37,28 @@
 #include <cmath>
 #include <cstdlib> 
 #include "TRandom3.h"
-#include "TMatrixDSym.h"
+#include "TMatrixD.h"
 #include "mnormal.h"
 
 using namespace std;
 
 mnormal::mnormal() 
   : n(0) {}
+
+TMatrixD
+mnormal::covariance(TMinuit& minuit, int N)
+{
+  int ndim = N * N;
+  double* errmat = new double(ndim);
+  minuit.mnemat(errmat, ndim);
+
+  TMatrixD cov(N, N);
+  for(int ii=0; ii < N; ++ii)
+    for(int jj=0; jj < N; ++jj)
+      cov[ii][jj] = errmat[ii*ndim+jj];
+  delete errmat;
+  return cov;
+}
 
 mnormal::mnormal(std::vector<double>& ai)
     : random(TRandom3()),
@@ -57,8 +72,30 @@ mnormal::mnormal(std::vector<double>& ai)
 }
 
 mnormal::mnormal(std::vector<double>& ai,
+		 TMatrixD& cov)
+  : random(TRandom3()),
+    n(ai.size()),
+    a(ai)
+{
+  v.clear();
+  z.clear();
+  c.clear();
+  
+  // store covariance matrix
+  vector<double> row(n);
+  for (int i = 0; i < n; i++)
+    { 
+      z.push_back(0);
+      for (int j = 0; j < n; j++)
+	row[j] = cov[i][j];
+      addRow(row);
+    }
+}
+
+
+mnormal::mnormal(std::vector<double>& ai,
 		 std::vector<double>& stddev,
-		 TMatrixDSym& cor)
+		 TMatrixD& cor)
   : random(TRandom3()),
     n(ai.size()),
     a(ai)
