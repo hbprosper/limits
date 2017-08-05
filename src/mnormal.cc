@@ -45,14 +45,14 @@ using namespace std;
 mnormal::mnormal() 
   : n(0) {}
 
-TMatrixD
+TMatrixDSym
 mnormal::covariance(TMinuit& minuit, int N)
 {
   int ndim = N * N;
   double* errmat = new double(ndim);
   minuit.mnemat(errmat, ndim);
 
-  TMatrixD cov(N, N);
+  TMatrixDSym cov(N, N);
   for(int ii=0; ii < N; ++ii)
     for(int jj=0; jj < N; ++jj)
       cov[ii][jj] = errmat[ii*ndim+jj];
@@ -72,7 +72,7 @@ mnormal::mnormal(std::vector<double>& ai)
 }
 
 mnormal::mnormal(std::vector<double>& ai,
-		 TMatrixD& cov)
+		 TMatrixDSym& cov)
   : random(TRandom3()),
     n(ai.size()),
     a(ai)
@@ -91,30 +91,6 @@ mnormal::mnormal(std::vector<double>& ai,
       addRow(row);
     }
 }
-
-
-mnormal::mnormal(std::vector<double>& ai,
-		 std::vector<double>& stddev,
-		 TMatrixD& cor)
-  : random(TRandom3()),
-    n(ai.size()),
-    a(ai)
-{
-  v.clear();
-  z.clear();
-  c.clear();
-  
-  // store covariance matrix
-  vector<double> row(n);
-  for (int i = 0; i < n; i++)
-    { 
-      z.push_back(0);
-      for (int j = 0; j < n; j++)
-	row[j] = stddev[i]*stddev[j]*cor[i][j];
-      addRow(row);
-    }
-}
-
 
 void mnormal::setSeed(int seed)
 {

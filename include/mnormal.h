@@ -39,7 +39,7 @@
 #include <cmath>
 #include <cstdlib> 
 #include "TRandom3.h"
-#include "TMatrixD.h"
+#include "TMatrixDSym.h"
 #include "TMinuit.h"
 
 namespace {
@@ -58,13 +58,8 @@ public:
   mnormal(std::vector<double>& ai);
 
   /// Vector of means and covariance matrix.
-  mnormal(std::vector<double>& ai,
-	  TMatrixD& cov);
+  mnormal(std::vector<double>& ai, TMatrixDSym& cov);
   
-  /// Vector of means, vector of standard deviations and correlation matrix.
-  mnormal(std::vector<double>& ai,
-	  std::vector<double>& stddev,
-	  TMatrixD& cor);
   ///
   void setSeed(int seed);
 
@@ -74,7 +69,7 @@ public:
   ~mnormal();
 
   /// Get NxN covariance matrix from Minuit.
-  static TMatrixD covariance(TMinuit& minuit, int N);
+  static TMatrixDSym covariance(TMinuit& minuit, int N);
   
   /// Get vector of unit variance, zero mean, variates.
   std::vector<double>& getZ();
