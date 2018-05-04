@@ -235,6 +235,11 @@ Bayes::normalize()
   for(int i=0; i < _nsteps+1; i++) _y[i] /= _normalization;
   _normalize = false;
 
+  if ( _interp != 0 )
+    {
+      delete _interp;
+      _interp = 0;
+    }
   if ( _interp == 0)
     _interp = new ROOT::Math::Interpolator(_x.size(),
 					   ROOT::Math::
@@ -301,7 +306,7 @@ Bayes::MAP(double CL)
   minuit.SetFCN(nlpFunc);
 
   double chi2 = TMath::NormQuantile((1.0+CL)/2);
-  chi2 = chi2*chi2/2;
+  chi2 = chi2*chi2/2;  
   minuit.SetErrorDef(chi2);
 
   int status=0;
@@ -331,6 +336,14 @@ Bayes::MAP(double CL)
   // if ( (int)results.size() > 3 ) results[3] = poierr;
   // if ( (int)results.size() > 4 ) results[4] = gcc;
   return _result;
+}
+
+void
+Bayes::setData(std::vector<double>& d)
+{
+  _data = d;
+  normalize();
+  _MAPdone = false;
 }
 
 double 

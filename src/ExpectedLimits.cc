@@ -96,7 +96,7 @@ ExpectedLimits::operator()(double true_value, bool compute_rms)
 	  double estimate = _calculator->estimate();
 	  double de = estimate - true_value;
 	  _rms  += de*de;
-	  _bias += de;
+	  _bias += estimate;
 	}
       if ( c % step == 0 )
 	{
@@ -115,7 +115,7 @@ ExpectedLimits::operator()(double true_value, bool compute_rms)
   if ( compute_rms )
     {
       _rms  = sqrt(_rms / _ensemblesize);
-      _bias = _bias / _ensemblesize;
+      _bias = _bias / _ensemblesize - true_value;
     }
 		
   // now sort limits in increasing order

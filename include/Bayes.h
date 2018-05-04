@@ -107,7 +107,7 @@ public:
   /// Compute MAximum Posterior estimate (mode of posterior density).
   std::pair<double, double> MAP(double CL=0.683);
   
-  void setData(std::vector<double>& d) { _data = d; normalize(); }
+  void setData(std::vector<double>& d);
   
   std::vector<double>& data() {return _data;}
 
