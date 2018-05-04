@@ -22,6 +22,8 @@ ExpectedLimits::ExpectedLimits()
   : _calculator(0),
     _ensemblesize(0),
     _prob(dummy),
+    _rms(0),
+    _bias(0),    
     _debuglevel(0)
 {}
 
@@ -35,6 +37,7 @@ ExpectedLimits::ExpectedLimits(LimitCalculator& calculator,
     _prob(prob),
     _limit(vector<double>(ensemblesize)),
     _rms(0),
+    _bias(0),
     _debuglevel(0)
 {
   if ( getenv("DBExpectedLimits") > 0 )
@@ -62,7 +65,8 @@ ExpectedLimits::operator()(double true_value, bool compute_rms)
 {
   char record[80];
   int step = _ensemblesize / 4;
-  _rms = 0;
+  _rms  = 0;
+  _bias = 0;
   for(int c=0; c < _ensemblesize; c++)
     {
       if ( c % step == 0 ) cout << "\tgenerating sample:\t" << c;
@@ -90,8 +94,9 @@ ExpectedLimits::operator()(double true_value, bool compute_rms)
       if ( compute_rms )
 	{
 	  double estimate = _calculator->estimate();
-	  double de = (true_value - estimate);
-	  _rms += de*de;
+	  double de = estimate - true_value;
+	  _rms  += de*de;
+	  _bias += de;
 	}
       if ( c % step == 0 )
 	{
@@ -108,7 +113,10 @@ ExpectedLimits::operator()(double true_value, bool compute_rms)
     }
 
   if ( compute_rms )
-    _rms = sqrt(_rms / _ensemblesize);
+    {
+      _rms  = sqrt(_rms / _ensemblesize);
+      _bias = _bias / _ensemblesize;
+    }
 		
   // now sort limits in increasing order
   sort(_limit.begin(), _limit.end());

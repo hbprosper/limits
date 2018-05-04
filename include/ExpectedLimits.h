@@ -38,7 +38,8 @@ public:
   
   virtual std::vector<double> operator() (double true_value=1,
 					  bool compute_rms=true);
-  virtual double rms() { return _rms; }
+  virtual double rms()  { return _rms; }
+  virtual double bias() { return _bias; }
   
 private:
   LimitCalculator* _calculator;
@@ -46,6 +47,7 @@ private:
   std::vector<double> _prob;
   std::vector<double> _limit;
   double _rms;
+  double _bias;
   int _debuglevel;
 };
 
