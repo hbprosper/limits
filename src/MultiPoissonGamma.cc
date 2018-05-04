@@ -267,6 +267,8 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
   vector<double> c;
   vector<double> dc;
   _getcounts(rfilename, histname, c, dc);
+  if ( _nbins <= 0 ) _nbins = (int)c.size();
+  
   if (_nbins != (int)c.size())
     Warning("MultiPoissonGamma",
 	    "number of bins specified %d != number of bins %d "
