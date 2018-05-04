@@ -69,18 +69,16 @@ class Wald : public LimitCalculator
   virtual ~Wald();
 
   PDFunction* pdf() {return _model;}
-  
-  /** Compute p-value given parameter of interest.
-   */
-  double operator()(double poi);
-  
-  /** Compute Z-value given parameter of interest using Z = sqrt[2*ln L(poi_hat)/L(0)].
+
+ /** Compute Z-value given parameter of interest using Z = sqrt[2*ln L(poi_hat)/L(0)].
    */
   double zvalue(double poi);
+  
    /** Return best fit value.
     * This should be called after the interval calculation.
    */
   double estimate();
+  
   /** Return uncertainty associated with estimate.
    * This should be called after the interval calculation.
    */
@@ -89,6 +87,12 @@ class Wald : public LimitCalculator
   /// Compute percentile.
   double percentile(double CL=-1);
 
+  //======================================================================
+  
+  /** Compute p-value given parameter of interest.
+   */
+  double operator()(double poi);
+  
   ///
   void setRange(double poimin, double poimax) {_poimin=poimin;_poimax=poimax;}
 

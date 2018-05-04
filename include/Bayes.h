@@ -68,6 +68,22 @@ public:
    */
 
   PDFunction* pdf() {return _pdf;}
+
+  /// Compute Bayesian Z=sign(B10)*sqrt(2*|B10|), where B10 is the Bayes factor.
+  double zvalue(double mu=1);
+
+   /** Return estimate of mu.
+   */
+  double estimate();
+  
+  /** Return uncertainty associated with estimate.
+   */
+  double uncertainty();
+
+  /// Compute percentile of posterior density.
+  double percentile(double p=-1);
+
+  //======================================================================
   
   /** Compute prior.
    */  
@@ -88,9 +104,6 @@ public:
   /// Compute cdf of posterior density.
   double cdf(double poi);
 
-  /// Compute percentile of posterior density.
-  double percentile(double p=-1);
-
   /// Compute MAximum Posterior estimate (mode of posterior density).
   std::pair<double, double> MAP(double CL=0.683);
   
@@ -104,9 +117,6 @@ public:
   }
   
   double CL() { return _cl; }
-  
-  /// Compute Bayesian Z=sign(B10)*sqrt(2*|B10|), where B10 is the Bayes factor.
-  double zvalue(double mu=1);
 
 private:
   PDFunction*    _pdf;
@@ -131,7 +141,8 @@ private:
   double _q(double prob);
   double _f(double prob);
   double _nsig;
-  double _postmax;
+  bool   _MAPdone;
+  std::pair<double, double> _result;
 };
 
 #endif

@@ -37,7 +37,6 @@
 #include <cmath>
 #include <cstdlib> 
 #include "TRandom3.h"
-#include "TMatrixD.h"
 #include "mnormal.h"
 
 using namespace std;
@@ -52,10 +51,10 @@ mnormal::covariance(TMinuit& minuit, int N)
   double* errmat = new double(ndim);
   minuit.mnemat(errmat, ndim);
 
-  TMatrixDSym cov(N, N);
+  TMatrixDSym cov(N);
   for(int ii=0; ii < N; ++ii)
     for(int jj=0; jj < N; ++jj)
-      cov[ii][jj] = errmat[ii*ndim+jj];
+      cov(ii, jj) = errmat[ii*ndim+jj];
   delete errmat;
   return cov;
 }
@@ -148,7 +147,25 @@ void mnormal::addRow(vector<double>& row)
 
 mnormal::~mnormal() {}
 
-vector<double>& mnormal::getZ() {  return z; }
+vector<double>& mnormal::getZ() { return z; }
+
+// Generate pseudo-random vectors
+/////////////////////////////////
+bool mnormal::generate(std::vector<double>& x)
+{
+  bool positive = true;
+  for (int i = 0; i < n; i++) z[i] = random.Gaus();
+  
+  for (int i = 0; i < n; i++)
+    {
+      double y = 0;
+      for (int j = 0; j < n; j++) y += c[i][j]*z[j];
+      y = y + a[i];
+      x[i] = y;
+      if ( x[i] < 0.0 ) positive = false;
+    }
+  return positive;
+}
 
 // Generate pseudo-random vectors
 /////////////////////////////////
@@ -156,14 +173,13 @@ bool mnormal::generate(std::vector<double>& x, std::vector<double>& Z)
 {
   bool positive = true;
   
-  if ( Z.size() == 0 )
+  if ( Z.size() != z.size() )
     {
-      for (int i = 0; i < n; i++) z[i] = random.Gaus();
+      cout << "Z size mismatch!" << endl;
+      exit(0);
     }
-  else
-    {
-      for (int i = 0; i < n; i++) z[i] = Z[i];
-    }
+  
+  for (int i = 0; i < n; i++) z[i] = Z[i];
   
   for (int i = 0; i < n; i++)
     {

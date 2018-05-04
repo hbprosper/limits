@@ -6,6 +6,7 @@
 // Updated: 13 Mar 2011 HBP - fix normalization of post.
 //          06 Mar 2014 HBP
 //          30 May 2015 HBP - implement direct RooFit interface.
+//          03 May 2018 HBP - add estimate and uncertainty methods
 //--------------------------------------------------------------
 #include <iostream>
 #include <fstream>
@@ -61,7 +62,9 @@ Bayes::Bayes(PDFunction& model,
     _interp(0),
     _nsteps(50),
     _x(vector<double>()),
-    _y(vector<double>())
+    _y(vector<double>()),
+    _MAPdone(false),
+    _result(std::pair<double, double>(0, 0))
 {
   assert( _poimax > _poimin ); 
   OBJ = this;
@@ -84,7 +87,9 @@ Bayes::Bayes(RooAbsPdf& pdf, RooArgSet& obs, RooRealVar& poi,
     _interp(0),
     _nsteps(50),
     _x(vector<double>()),
-    _y(vector<double>())    
+    _y(vector<double>()),
+    _MAPdone(false),
+    _result(std::pair<double, double>(0, 0))    
 {
   OBJ = this;
   normalize();
@@ -135,9 +140,11 @@ double
 Bayes::normalize()
 {
   // try to optimize support of likelihood x prior density
+
   int   nsteps = 2 * _nsteps;
   vector<double> p(nsteps+1);
   double step  = 0;
+  
   for(int ii=0; ii < 2; ii++)
     {
       double pmax = 0.0;
@@ -146,38 +153,38 @@ Bayes::normalize()
       step = (_poimax - _poimin) / nsteps;
       
       for(int i=0; i < nsteps+1; i++)
-	{
-	  double xx = _poimin + i*step;
-	  p[i] = _likeprior(xx);
+  	{
+  	  double xx = _poimin + i*step;
+  	  p[i] = _likeprior(xx);
       
-	  if ( p[i] > pmax )
-	    {
-	      pmax = p[i];
-	      mode = i;
-	    }
-	}
+  	  if ( p[i] > pmax )
+  	    {
+  	      pmax = p[i];
+  	      mode = i;
+  	    }
+  	}
 
       // find left edge of support
       double factor = 1.e-5;
       int jj = 0;
       for(int i=0; i < mode; i++)
-	{
-	  if (p[i] < factor * pmax)
-	    jj = i;
-	  else
-	    break;
-	}
+  	{
+  	  if (p[i] < factor * pmax)
+  	    jj = i;
+  	  else
+  	    break;
+  	}
       _poimin = jj * step;
   
       // find right edge of support  
       for(int i=mode; i < nsteps+1; i++)
-	{
-	  if (p[i] < factor * pmax)
-	    break;
-	  else
-	    jj = i;
-	}
-      _poimax = jj * step;
+  	{
+  	  if (p[i] < factor * pmax)
+  	    break;
+  	  else
+  	    jj = i;
+  	}
+      _poimax = 2 * jj * step;
     }
   assert( _poimax > _poimin );
 
@@ -286,8 +293,9 @@ Bayes::percentile(double p)
 pair<double, double>
 Bayes::MAP(double CL)
 {
+  if ( _MAPdone ) return _result;
   if ( _normalize ) normalize();
-
+  
   TMinuit minuit(1);
   minuit.SetPrintLevel(-1);
   minuit.SetFCN(nlpFunc);
@@ -310,11 +318,10 @@ Bayes::MAP(double CL)
     }
   
   // get fit result
-  double poihat = 0.0;
-  double poierr = 0.0;
-  minuit.GetParameter(0, poihat, poierr);
-
-  pair<double, double> result(poihat, poierr);
+  minuit.GetParameter(0, _result.first, _result.second);
+  
+  _MAPdone = true;
+  
   // // get MINOS errors
   // double upper, lower, gcc;
   // minuit.mnerrs(0, upper, lower, perror, gcc);
@@ -323,17 +330,38 @@ Bayes::MAP(double CL)
   // if ( (int)results.size() > 2 ) results[2] = lower;
   // if ( (int)results.size() > 3 ) results[3] = poierr;
   // if ( (int)results.size() > 4 ) results[4] = gcc;
-  return result;
+  return _result;
 }
 
 double 
 Bayes::zvalue(double poi)
 {
-  double lnB10 = log(likelihood(poi)/likelihood(0));
+  double N = likelihood(poi);
+  double D = likelihood(0);
+  double lnB10 = log(N/D);
+  if ( lnB10 != lnB10 )
+    {
+      cout << "*** Bayes - this is Baaaad! lnB10 = " 
+           << lnB10 << endl;
+      exit(0);
+    }  
   double abslnB10 = abs(lnB10);
   return lnB10 * sqrt(2*abslnB10) / abslnB10;
 }
 
+double
+Bayes::estimate()
+{
+  MAP();
+  return _result.first;
+}
+
+double
+Bayes::uncertainty()
+{
+  MAP();
+  return _result.second;
+}
 
 double 
 Bayes::_likeprior(double poi)

@@ -42,11 +42,6 @@
 #include "TMatrixDSym.h"
 #include "TMinuit.h"
 
-namespace {
-  typedef std::vector<std::vector<double> > vvdouble; 
-  std::vector<double> ZG;
-};
-
 /// Generate variates according to a multivariate Gaussian.
 class mnormal
 {
@@ -75,8 +70,11 @@ public:
   std::vector<double>& getZ();
 
   /// Generate random vectors of Gaussian variates.
-  bool generate(std::vector<double>& x, std::vector<double>& Z=ZG);
+  bool generate(std::vector<double>& x);
 
+  /// Generate random vectors of Gaussian variates using the Z variates provided.
+  bool generate(std::vector<double>& x, std::vector<double>& Z);
+  
   /// Print Cholesky square root of covariance matrix.
   void printme();
 
