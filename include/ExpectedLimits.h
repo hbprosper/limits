@@ -22,7 +22,7 @@ class ExpectedLimits
 public:
   static std::vector<double> dummy;
   
-  ExpectedLimits ();
+  ExpectedLimits();
 
   /** Compute quantiles of limits distribution, generated internally.
       @param ensemble size - size of ensemble of limits
@@ -36,14 +36,16 @@ public:
 
   virtual std::vector<double> prob() { return _prob; }
   
-  virtual std::vector<double> operator() (double mu=1, int ensemblesize=-1);
+  virtual std::vector<double> operator() (double true_value=1,
+					  bool compute_rms=true);
+  virtual double rms() { return _rms; }
   
 private:
   LimitCalculator* _calculator;
   int _ensemblesize;
   std::vector<double> _prob;
   std::vector<double> _limit;
-
+  double _rms;
   int _debuglevel;
 };
 

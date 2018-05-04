@@ -34,7 +34,10 @@ public:
   virtual void setData(std::vector<double>& d)=0;
   
   /// Compute a Z-value
-  virtual double zvalue(double mu=1)=0 ;
+  virtual double zvalue(double mu=1)=0;
+
+  /// Compute estimate
+  virtual double estimate()=0;  
 };
 
 #endif

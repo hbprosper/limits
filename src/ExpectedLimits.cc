@@ -34,6 +34,7 @@ ExpectedLimits::ExpectedLimits(LimitCalculator& calculator,
     _ensemblesize(ensemblesize),
     _prob(prob),
     _limit(vector<double>(ensemblesize)),
+    _rms(0),
     _debuglevel(0)
 {
   if ( getenv("DBExpectedLimits") > 0 )
@@ -57,29 +58,21 @@ ExpectedLimits::~ExpectedLimits()
 }
 
 vector<double>
-ExpectedLimits::operator()(double mu, int ensemblesize)
+ExpectedLimits::operator()(double true_value, bool compute_rms)
 {
-  
-  int samplesize = ensemblesize;
-  if ( samplesize < 1 )
-    samplesize = _ensemblesize;
-  else
-    samplesize = ensemblesize < _ensemblesize ? ensemblesize : _ensemblesize;
-  
-  _limit.resize(samplesize);
-  
   char record[80];
-  int step = samplesize / 4;
-  for(int c=0; c < samplesize; c++)
+  int step = _ensemblesize / 4;
+  _rms = 0;
+  for(int c=0; c < _ensemblesize; c++)
     {
       if ( c % step == 0 ) cout << "\tgenerating sample:\t" << c;
       
       // generate a data set assuming the background only hypothesis
       // that is, mu=0
-      vector<double>& d = _calculator->pdf()->generate(mu);
+      vector<double>& d = _calculator->pdf()->generate(true_value);
       if ( _debuglevel > 2 )
 	{
-	  cout << endl << c << "\tgenerated data:" << endl;
+	  cout << endl << c << "\tgenerated data: " << endl;
 	  for(size_t ii=0; ii < d.size(); ii++)
 	    {
 	      sprintf(record, " %9.0f", d[ii]);
@@ -91,12 +84,32 @@ ExpectedLimits::operator()(double mu, int ensemblesize)
       // update data in calculator
       _calculator->setData(d);
       
-      // compute limit
+      // compute 95% limit
       _limit[c] = _calculator->percentile();
+
+      if ( compute_rms )
+	{
+	  double estimate = _calculator->estimate();
+	  double de = (true_value - estimate);
+	  _rms += de*de;
+	}
       if ( c % step == 0 )
-	cout << "\tlimit = " << _limit[c] << endl;
+	{
+	  if ( compute_rms )
+	    {
+	      if ( c > 0 )
+		cout << "\trms = " << sqrt(_rms / c) << endl;
+	      else
+		cout << endl;
+	    }
+	  else
+	    cout << endl;
+	}
     }
-  
+
+  if ( compute_rms )
+    _rms = sqrt(_rms / _ensemblesize);
+		
   // now sort limits in increasing order
   sort(_limit.begin(), _limit.end());
 
@@ -105,7 +118,7 @@ ExpectedLimits::operator()(double mu, int ensemblesize)
   for(size_t ii=0; ii < _prob.size(); ii++)
     {
       // compute ordinal value of percentile
-      double q = _prob[ii] * samplesize;
+      double q = _prob[ii] * _ensemblesize;
       int    i = (int)q;
       double x = q - i;
       percentiles[ii] = x * _limit[i+1] + (1 - x) * _limit[i]; 
