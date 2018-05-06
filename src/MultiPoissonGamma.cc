@@ -277,7 +277,7 @@ MultiPoissonGamma::_readRootFile(vector<string>& records)
   _nbins = min(_nbins, (int)c.size());
   
   // open output text file
-  string ofilename("limits.dat");
+  string ofilename("limits.txt");
   ofstream fout(ofilename.c_str());
   
   // write out number of bins
