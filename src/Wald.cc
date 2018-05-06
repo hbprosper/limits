@@ -52,8 +52,12 @@ Wald::Wald(PDFunction& model,
     _data(data),
     _poimin(poimin),
     _poimax(poimax),
-    _alpha(1-CL)
+    _alpha(1-CL),
+    _verbosity(-1)
 {
+  if ( getenv("limits_verbosity") != (char*)0 )
+    _verbosity = atoi(getenv("limits_verbosity"));
+  
   OBJ = this;
   // find best fit value of parameter of interest
   fit();
@@ -73,7 +77,7 @@ double Wald::fit(double guess)
   _poierr = 0.0;
   
   TMinuit minuit(1);
-  minuit.SetPrintLevel(-1);
+  minuit.SetPrintLevel(_verbosity);
   minuit.SetFCN(nllFunc);
   minuit.SetErrorDef(0.5); // for log-likelihood fit
 

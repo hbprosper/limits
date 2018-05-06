@@ -64,8 +64,12 @@ Bayes::Bayes(PDFunction& model,
     _x(vector<double>()),
     _y(vector<double>()),
     _MAPdone(false),
-    _result(std::pair<double, double>(0, 0))
+    _result(std::pair<double, double>(0, 0)),
+    _verbosity(-1)
 {
+  if ( getenv("limits_verbosity") != (char*)0 )
+    _verbosity = atoi(getenv("limits_verbosity"));
+
   assert( _poimax > _poimin ); 
   OBJ = this;
   normalize();
@@ -89,8 +93,12 @@ Bayes::Bayes(RooAbsPdf& pdf, RooArgSet& obs, RooRealVar& poi,
     _x(vector<double>()),
     _y(vector<double>()),
     _MAPdone(false),
-    _result(std::pair<double, double>(0, 0))    
+    _result(std::pair<double, double>(0, 0)),
+    _verbosity(-1)
 {
+  if ( getenv("limits_verbosity") != (char*)0 )
+    _verbosity = atoi(getenv("limits_verbosity"));
+  
   OBJ = this;
   normalize();
   RooArgList list(obs);
@@ -302,7 +310,7 @@ Bayes::MAP(double CL)
   if ( _normalize ) normalize();
   
   TMinuit minuit(1);
-  minuit.SetPrintLevel(-1);
+  minuit.SetPrintLevel(_verbosity);
   minuit.SetFCN(nlpFunc);
 
   double chi2 = TMath::NormQuantile((1.0+CL)/2);

@@ -143,6 +143,7 @@ private:
   double _nsig;
   bool   _MAPdone;
   std::pair<double, double> _result;
+  int    _verbosity;
 };
 
 #endif

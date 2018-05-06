@@ -112,6 +112,7 @@ class Wald : public LimitCalculator
   double   _alpha;
   double   _poihat;
   double   _poierr;
+  int      _verbosity;
 
   double   _f(double poi);
   
