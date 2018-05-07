@@ -46,13 +46,13 @@ Bayes::Bayes(PDFunction& model,
 	     std::vector<double>& d,
 	     double poimin,
 	     double poimax,
-	     double cl,
+	     double cl_,
 	     PriorFunction* prior_)
   : _pdf(&model),
     _data(d),
     _poimin(poimin),
     _poimax(poimax),
-    _cl(cl),
+    _cl(cl_),
     _prior(prior_),
 #ifdef __WITH_ROOFIT__
     _rfprior(0),
@@ -77,13 +77,13 @@ Bayes::Bayes(PDFunction& model,
 
 #ifdef __WITH_ROOFIT__
 Bayes::Bayes(RooAbsPdf& pdf, RooArgSet& obs, RooRealVar& poi,
-	     double cl,
+	     double cl_,
 	     RooAbsPdf* prior_)
   : _pdf(new PDFWrapper(pdf, obs, poi)),
     _data(vector<double>(obs.getSize())),
     _poimin(poi.getMin()),
     _poimax(poi.getMax()),
-    _cl(cl),
+    _cl(cl_),
     _prior(0),
     _rfprior(prior_),
     _rfpoi(&poi),
@@ -304,7 +304,7 @@ Bayes::percentile(double p)
 }
 
 pair<double, double>
-Bayes::MAP(double CL)
+Bayes::MAP(double cl_)
 {
   if ( _MAPdone ) return _result;
   if ( _normalize ) normalize();
@@ -313,7 +313,7 @@ Bayes::MAP(double CL)
   minuit.SetPrintLevel(_verbosity);
   minuit.SetFCN(nlpFunc);
 
-  double chi2 = TMath::NormQuantile((1.0+CL)/2);
+  double chi2 = TMath::NormQuantile((1.0+cl_)/2);
   chi2 = chi2*chi2/2;  
   minuit.SetErrorDef(chi2);
 

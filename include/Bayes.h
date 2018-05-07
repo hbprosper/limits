@@ -105,7 +105,7 @@ public:
   double cdf(double poi);
 
   /// Compute MAximum Posterior estimate (mode of posterior density).
-  std::pair<double, double> MAP(double CL=0.683);
+  std::pair<double, double> MAP(double cl_=0.683);
   
   void setData(std::vector<double>& d);
   

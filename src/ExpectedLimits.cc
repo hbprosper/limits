@@ -30,17 +30,17 @@ ExpectedLimits::ExpectedLimits()
 
 ExpectedLimits::ExpectedLimits(LimitCalculator& calculator,
 			       int ensemblesize,
-			       std::vector<double>& prob)
+			       std::vector<double>& prob_)
 			       
   : _calculator(&calculator),
     _ensemblesize(ensemblesize),
-    _prob(prob),
+    _prob(prob_),
     _limit(vector<double>(ensemblesize)),
     _rms(0),
     _bias(0),
     _debuglevel(0)
 {
-  if ( getenv("DBExpectedLimits") > 0 )
+  if ( getenv("DBExpectedLimits") != (char*)0 )
     _debuglevel = atoi(getenv("DBExpectedLimits"));
   else
     _debuglevel = 0;
